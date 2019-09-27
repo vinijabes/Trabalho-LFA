@@ -1,0 +1,439 @@
+const cytoscape = require('cytoscape');
+const edgehandles = require('cytoscape-edgehandles');
+const cxtmenu = require('cytoscape-cxtmenu');
+const prompt = require('electron-prompt');
+
+const Automata = require('../Automata').Automata;
+
+cytoscape.use(edgehandles);
+cytoscape.use(cxtmenu);
+
+const options = {
+    ADD_NODE: 0,
+    ADD_EDGE: 1,
+    REMOVE: 2,
+    MOVE: 3
+}
+
+var cy = cytoscape({
+    container: document.getElementById('cy'), // container to render in
+    layout: {
+        name: 'concentric',
+        concentric: function (n) { return n.id() === 'j' ? 200 : 0; },
+        levelWidth: function (nodes) { return 100; },
+        minNodeSpacing: 100
+    },
+
+    style: [
+        {
+            selector: 'node[name]',
+            style: {
+                'content': 'data(name)'
+            }
+        },
+
+        {
+            selector: 'node',
+            style: {
+                'background-color': '#888'
+            }
+        },
+
+        {
+            selector: 'edge',
+            style: {
+                'text-wrap': 'wrap',
+                'curve-style': 'bezier',
+                'target-arrow-shape': 'triangle',
+                'control-point-weight': '0.7',
+                'label': 'data(label)'
+            }
+        },
+
+        // some style for the extension
+
+        {
+            selector: '.eh-handle',
+            style: {
+                'background-color': 'red',
+                'width': 12,
+                'height': 12,
+                'shape': 'ellipse',
+                'overlay-opacity': 0,
+                'border-width': 12, // makes the handle easier to hit
+                'border-opacity': 0
+            }
+        },
+
+        {
+            selector: '.eh-hover',
+            style: {
+                'background-color': 'red'
+            }
+        },
+
+        {
+            selector: '.eh-source',
+            style: {
+                'border-width': 2,
+                'border-color': 'red'
+            }
+        },
+
+        {
+            selector: '.eh-target',
+            style: {
+                'border-width': 2,
+                'border-color': 'red'
+            }
+        },
+
+        {
+            selector: '.eh-preview, .eh-ghost-edge',
+            style: {
+                'background-color': 'red',
+                'line-color': 'red',
+                'target-arrow-color': 'red',
+                'source-arrow-color': 'red'
+            }
+        },
+
+        {
+            selector: '.eh-ghost-edge.eh-preview-active',
+            style: {
+                'opacity': 0
+            }
+        },
+
+        {
+            selector: ".multiline-auto",
+            style: {
+                "text-wrap": "wrap",
+                "text-max-width": 1
+            }
+        },
+
+        {
+            selector: ".autorotate",
+            style: {
+                "edge-text-rotation": "autorotate",
+                "text-align": "left"
+            }
+        },
+
+        {
+            selector: ".bottom-center",
+            style: {
+                "text-valign": "top",
+                "text-halign": "left"
+            }
+        },
+
+        {
+            selector: ".initial-automata",
+            style: {
+                "border-width": "2px",
+            }
+        },
+
+        {
+            selector: ".final-automata",
+            style: {
+                "background-color": "#A35500",
+            }
+        },
+
+        {
+            selector: ".active-automata",
+            style: {
+                "border-width": "2px",
+                "border-color": "red"
+            }
+        },
+
+        {
+            selector: ".active-edge",
+            style: {
+                "line-color": "red",
+                "target-arrow-color": "red"
+            }
+        },
+    ]
+});
+
+let defaultsEdges = {
+    preview: true, // whether to show added edges preview before releasing selection
+    hoverDelay: 150, // time spent hovering over a target node before it is considered selected
+    handleNodes: 'node', // selector/filter function for whether edges can be made from a given node
+    snap: false, // when enabled, the edge can be drawn by just moving close to a target node
+    snapThreshold: 50, // the target node must be less than or equal to this many pixels away from the cursor/finger
+    snapFrequency: 15, // the number of times per second (Hz) that snap checks done (lower is less expensive)
+    noEdgeEventsInDraw: false, // set events:no to edges during draws, prevents mouseouts on compounds
+    disableBrowserGestures: true, // during an edge drawing gesture, disable browser gestures such as two-finger trackpad swipe and pinch-to-zoom
+    handlePosition: function (node) {
+        return 'middle top'; // sets the position of the handle in the format of "X-AXIS Y-AXIS" such as "left top", "middle top"
+    },
+    handleInDrawMode: false, // whether to show the handle in draw mode
+    edgeType: function (sourceNode, targetNode) {
+        // can return 'flat' for flat edges between nodes or 'node' for intermediate node between them
+        // returning null/undefined means an edge can't be added between the two nodes
+        return 'flat';
+    },
+    loopAllowed: function (node) {
+        // for the specified node, return whether edges from itself to itself are allowed
+        return true;
+    },
+    nodeLoopOffset: -50, // offset for edgeType: 'node' loops
+    nodeParams: function (sourceNode, targetNode) {
+        // for edges between the specified source and target
+        // return element object to be passed to cy.add() for intermediary node
+        return {};
+    },
+    edgeParams: function (sourceNode, targetNode, i) {
+        // for edges between the specified source and target
+        // return element object to be passed to cy.add() for edge
+        // NB: i indicates edge index in case of edgeType: 'node'
+
+        return {
+            data: {
+                id: `${sourceNode.id()}_${targetNode.id()}`
+            },
+            classes: 'multiline-auto autorotate'
+        };
+    },
+    ghostEdgeParams: function () {
+        // return element object to be passed to cy.add() for the ghost edge
+        // (default classes are always added for you)
+        return {};
+    },
+    show: function (sourceNode) {
+        // fired when handle is shown
+    },
+    hide: function (sourceNode) {
+        // fired when the handle is hidden
+    },
+    start: function (sourceNode) {
+        // fired when edgehandles interaction starts (drag on handle)
+    },
+    complete: function (sourceNode, targetNode, addedEles) {
+        // fired when edgehandles is done and elements are added        )
+        prompt({
+            tile: 'Nova regra'
+        }).then((r) => {
+            if (r == null) {
+                cy.remove(addedEles);
+            } else {
+                if (r == '') r = 'λ';
+                if (addedEles.length > 0) {
+                    addedEles.data('label', r);
+                    addedEles.data('data', [r]);
+                }
+                else {
+                    let edge = cy.edges(`edge#${sourceNode.id()}_${targetNode.id()}`);
+                    let data = edge.data('data');
+                    data.push(r);
+                    edge.data('label', data.join(' '));
+                    edge.data('data', data);
+                }
+            }
+        })
+        //console.log(sourceNode, targetNode, addedEles);
+    },
+    stop: function (sourceNode) {
+        // fired when edgehandles interaction is stopped (either complete with added edges or incomplete)
+    },
+    cancel: function (sourceNode, cancelledTargets) {
+        // fired when edgehandles are cancelled (incomplete gesture)
+    },
+    hoverover: function (sourceNode, targetNode) {
+        // fired when a target is hovered
+    },
+    hoverout: function (sourceNode, targetNode) {
+        // fired when a target isn't hovered anymore
+    },
+    previewon: function (sourceNode, targetNode, previewEles) {
+        // fired when preview is shown
+    },
+    previewoff: function (sourceNode, targetNode, previewEles) {
+        // fired when preview is hidden
+    },
+    drawon: function () {
+        // fired when draw mode enabled
+    },
+    drawoff: function () {
+        // fired when draw mode disabled
+    }
+};
+
+let defaultsCtx = {
+    menuRadius: 100, // the radius of the circular menu in pixels
+    selector: '.automata', // elements matching this Cytoscape.js selector will trigger cxtmenus
+    commands: [
+        {
+            content: 'INICIAL',
+            select: function (ele) {
+                let initial = ele.data('initial');
+                if (!initial) initial = false;
+
+                if (initial)
+                    ele.removeClass('initial-automata');
+                else
+                    ele.addClass('initial-automata');
+
+                ele.data('initial', !initial);
+            }
+        },
+
+        {
+            content: 'FINAL',
+            select: function (ele) {
+                let final = ele.data('final');
+                if (!final) final = false;
+
+                if (final)
+                    ele.removeClass('final-automata');
+                else
+                    ele.addClass('final-automata');
+
+                ele.data('final', !final);
+            }
+        },
+    ], // function( ele ){ return [ /*...*/ ] }, // a function that returns commands or a promise of commands
+    fillColor: 'rgba(0, 0, 0, 0.75)', // the background colour of the menu
+    activeFillColor: 'rgba(1, 105, 217, 0.75)', // the colour used to indicate the selected command
+    activePadding: 20, // additional size in pixels for the active command
+    indicatorSize: 24, // the size in pixels of the pointer to the active command
+    separatorWidth: 3, // the empty spacing in pixels between successive commands
+    spotlightPadding: 4, // extra spacing in pixels between the element and the spotlight
+    minSpotlightRadius: 24, // the minimum radius in pixels of the spotlight
+    maxSpotlightRadius: 38, // the maximum radius in pixels of the spotlight
+    openMenuEvents: 'cxttapstart taphold', // space-separated cytoscape events that will open the menu; only `cxttapstart` and/or `taphold` work here
+    itemColor: 'white', // the colour of text in the command's content
+    itemTextShadowColor: 'transparent', // the text shadow colour of the command's content
+    zIndex: 9999, // the z-index of the ui div
+    atMouse: false // draw menu at mouse position
+};
+
+const edgeHandles = cy.edgehandles(defaultsEdges);
+cy.cxtmenu(defaultsCtx);
+
+
+cy.on('click', (e) => {
+
+});
+
+let selectedOption = options.MOVE;
+let first = null;
+let second = null;
+let panning = false;
+let nodeId = 0;
+
+for (let option of document.querySelectorAll('#menu a'))
+    option.onclick = function (e) {
+        selectedOption = this.dataset.opt;
+    }
+
+cy.on('mousedown', 'node', function (e) {
+    first = this.id();
+})
+
+cy.on('mouseup', 'node', function (e) {
+    second = this.id();
+
+    if(selectedOption == options.REMOVE && !panning) {
+        cy.remove(this);
+    }
+})
+
+cy.on('mouseup', 'edge', function (e) {
+    if(selectedOption == options.REMOVE && !panning) {
+        let data = this.data('data');
+        if(data.length <= 1) cy.remove(this);
+        else {
+            data.pop();
+            this.data('data', data);
+            this.data('label', data.join(' '));
+        }
+    }
+})
+
+cy.on('mousedown', function (e) {
+    panning = false;
+})
+
+cy.on('mouseup', function (e) {
+    if (selectedOption == options.ADD_NODE && !first && !second && !panning) {
+        cy.add({
+            group: 'nodes',
+            data: { id: nodeId++ },
+            position: e.position,
+            classes: 'automata'
+        });
+    }
+
+    if (selectedOption == options.ADD_EDGE && first && second) {
+        cy.add({
+            group: 'edges',
+            data: { id: nodeId++, source: first, target: second },
+        });
+    }
+
+    first = null;
+    second = null;
+})
+
+cy.on('mousemove', (e) => {
+    if (selectedOption == options.ADD_EDGE && first) cy.nodes().ungrabify();
+})
+
+document.onmousemove = (e) => {
+    if (Math.abs(e.movementX) + Math.abs(e.movementY) > 10) panning = true;
+};
+
+const fita = document.getElementById('fita');
+const initButton = document.getElementById('init');
+const nextButton = document.getElementById('next');
+const automata = new Automata();
+
+fita.value = "";
+
+let result = null;
+let current = 0;
+
+initButton.onclick = function (e) {
+    let nodes = cy.nodes('.automata');
+    let initial = null;
+    for (let i = 0; i < nodes.length; i++) {
+        let node = nodes[i];
+        let edges = cy.edges(`edge[source="${node.id()}"]`);
+        edges = Object.values(edges).filter((elem, index) => index < edges.length);
+        automata.AddAutomata(node.id(), (edges.map((elem) => elem.data())), node.data('final'));
+        if (node.data('initial')) {
+            if (initial) throw new Error("Can't have two starting points");
+            initial = node.id();
+        }
+    }
+
+    console.log(automata.automatas);
+
+    result = automata.RunTest(initial, fita.value);
+    current = 0;
+    if (result) {
+        cy.nodes(`node#${result[current]}`).addClass('active-automata');
+        cy.edges(`edge#${result[current]}_${result[current + 1]}`).addClass('active-edge');
+        nextButton.removeAttribute("disabled");
+    }
+}
+
+nextButton.onclick = function (e) {
+    if (!result) return;
+    cy.nodes(`node#${result[current]}`).removeClass('active-automata');
+    cy.edges(`edge#${result[current]}_${result[current + 1]}`).removeClass('active-edge');
+    if (current + 1 < result.length) {
+        current++;
+        cy.nodes(`node#${result[current]}`).addClass('active-automata');
+        cy.edges(`edge#${result[current]}_${result[current + 1]}`).addClass('active-edge');
+    } else {
+        nextButton.setAttribute("disabled", "disabled");
+    }
+}

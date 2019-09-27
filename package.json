@@ -1,0 +1,29 @@
+{
+  "name": "Trab",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.electron.lfa"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^6.0.9",
+    "electron-builder": "^21.2.0"
+  },
+  "dependencies": {
+    "cytoscape": "^3.10.0",
+    "cytoscape-cxtmenu": "^3.1.1",
+    "cytoscape-edgehandles": "^3.6.0",
+    "cytoscape-popper": "^1.0.4",    
+    "electron-prompt": "^1.3.1"
+  }
+}

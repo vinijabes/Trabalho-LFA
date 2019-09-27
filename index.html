@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Olá Mundo!</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+
+    <link rel="stylesheet" href="./src/Assets/css/materialize.min.css">
+</head>
+
+<body>
+
+    <div id="prototype" style="display: none; margin-top: 8px">
+        <input type="text" id="lhs">→<input type="text" id="rhs">
+    </div>
+
+    <div id="regex" style="display: flex; justify-content: center">
+        <div>
+            <h2 style="text-align: center">Expressão Regular</h2>
+            <div>
+                <label style="width: 25%">Expressão: </label>
+                <input id="regexEntry" style="width: 75%">
+            </div>
+            <div>
+                <label style="width: 25%">Entrada: </label>
+                <input id="regexInput" style="width: 75%">
+            </div>
+        </div>
+    </div>
+
+    <div id="grammar" style="display: flex; justify-content: center">
+        <div>
+            <h2 style="text-align: center">Gramática</h2>
+            <div id="rules"></div>
+            <input id="entry" style="margin-top: 8px">
+            <button id="execute">Executar</button>
+            <div id="grammarResult"></div>
+        </div>
+    </div>
+
+    <div>
+        <div id="menu"
+            style="height: 70px; width: 80%; margin-left:auto; margin-right: auto; margin-top: 20px; border: 1px solid black">
+            <div style="margin: 4px">
+                <a data-opt="0">Add Node</a>
+                <a data-opt="2">Remove</a>
+                <div>
+                    <input type="text" id="fita">
+                    <button id='init'>Iniciar</button>
+                    <button id='next' disabled>Próximo</button>
+                </div>
+            </div>
+        </div>
+        <div id="cy" style="width: 100%; height: 500px; position: relative; z-index: 0;">
+        </div>
+    </div>
+
+    <script>
+        window.require('./index.js');        
+    </script>
+
+    <script src="./src/Assets/js/materialize.min.js"></script>
+</body>
+
+</html>
