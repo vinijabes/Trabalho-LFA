@@ -49,6 +49,8 @@ module.exports = class Glud {
         let queue = [];
         let map = {};
 
+        console.log(queue);
+
         for (let baseString of this.rules[initial]) {
             let canAdd = true;
             let charIndex = 0;
@@ -62,8 +64,9 @@ module.exports = class Glud {
                 }
             }
 
-            if (canAdd)
+            if (canAdd){
                 queue.push({ str: baseString, index: charIndex });
+            }
         }
 
         while (queue.length > 0) {
@@ -72,11 +75,14 @@ module.exports = class Glud {
             let currentIndex = current.index;
             let nextToken = currentStr[currentStr.length - 1];
 
+            if (currentIndex == str.length && currentIndex == currentStr.length) {
+                return true;
+            }
+
             if (map[currentStr]) continue;
             else map[currentStr] = true;
 
             for (let i = currentIndex; i < currentStr.length && currentStr[i].toLowerCase() == currentStr[i]; i++) {
-                console.log("SALVE");
                 if (currentStr[i] == str[i])++currentIndex;
                 else {
                     currentIndex = -1;
@@ -95,7 +101,6 @@ module.exports = class Glud {
                 queue.push({ str: currentStr.replace(nextToken, rule), index: currentIndex });
             }
         }
-
         return false;
     }
 }

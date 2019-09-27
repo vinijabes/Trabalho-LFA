@@ -23,6 +23,7 @@ module.exports = class Glud {
         queue.push({ automata: initial, index: 0, path: [{ node: initial, index: 0 }] });
         while (queue.length > 0) {
             let current = queue.pop();
+            console.log(current);
             let currentAutomata = this.automatas[current.automata];
             let currentIndex = current.index;
             let nextEdges = currentAutomata.edges;

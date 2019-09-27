@@ -9,7 +9,7 @@ const entryGrammar = grammarContainer.querySelector("#entry");
 const executeGrammar = grammarContainer.querySelector("#execute");
 
 (grammarProto.querySelector("#rhs")).onfocus = function () {
-    if (this.parentNode.querySelector("#lhs").value != "") {
+    if (this.parentNode.parentNode.querySelector("#lhs").value != "") {
         grammarContainerRules.appendChild(grammarProto.clone());
         this.onfocus = null;
     }
@@ -32,7 +32,7 @@ executeGrammar.onclick = function () {
         if (!initial) initial = token;
         glud.AddRule(token, rule);
     }
-
+    console.log(glud);
     console.log(glud.RunTest(initial, entryGrammar.value));
 }
 
@@ -43,7 +43,7 @@ grammarProto.clone = function () {
     c.querySelector("#rhs").onchange = grammarProto.querySelector("#rhs").onchange;
     c.querySelector("#rhs").value = "";
 
-    c.style.display = 'block';
+    c.style.display = '';
     return c;
 }
 
