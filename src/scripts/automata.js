@@ -5,6 +5,12 @@ const prompt = require('electron-prompt');
 
 const Automata = require('../Automata').Automata;
 
+const modal = document.querySelector('#multipleAutomata');
+const multipleAutomataTest = document.querySelector('#multipleAutomataTest');
+const AddAutomataEntry = document.querySelector('#addAutomataEntry');
+const entryProto = document.querySelector('#prototype_automata');
+const entryList = modal.querySelector('.inputs');
+
 cytoscape.use(edgehandles);
 cytoscape.use(cxtmenu);
 
@@ -316,13 +322,13 @@ let defaultsCtx = {
 
 const edgeHandles = cy.edgehandles(defaultsEdges);
 cy.cxtmenu(defaultsCtx);
-
+cy.userZoomingEnabled(false);
 
 cy.on('click', (e) => {
 
 });
 
-let selectedOption = options.MOVE;
+let selectedOption = options.ADD_NODE;
 let first = null;
 let second = null;
 let panning = false;
@@ -340,15 +346,15 @@ cy.on('mousedown', 'node', function (e) {
 cy.on('mouseup', 'node', function (e) {
     second = this.id();
 
-    if(selectedOption == options.REMOVE && !panning) {
+    if (selectedOption == options.REMOVE && !panning) {
         cy.remove(this);
     }
 })
 
 cy.on('mouseup', 'edge', function (e) {
-    if(selectedOption == options.REMOVE && !panning) {
+    if (selectedOption == options.REMOVE && !panning) {
         let data = this.data('data');
-        if(data.length <= 1) cy.remove(this);
+        if (data.length <= 1) cy.remove(this);
         else {
             data.pop();
             this.data('data', data);
@@ -393,7 +399,7 @@ document.onmousemove = (e) => {
 const fita = document.getElementById('fita');
 const initButton = document.getElementById('init');
 const nextButton = document.getElementById('next');
-const automata = new Automata();
+let automata = new Automata();
 
 fita.value = "";
 
@@ -401,6 +407,7 @@ let result = null;
 let current = 0;
 
 initButton.onclick = function (e) {
+    automata = new Automata();
     let nodes = cy.nodes('.automata');
     let initial = null;
     for (let i = 0; i < nodes.length; i++) {
@@ -437,3 +444,52 @@ nextButton.onclick = function (e) {
         nextButton.setAttribute("disabled", "disabled");
     }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    var elems = document.querySelectorAll('.modal');
+    var instances = M.Modal.init(elems);
+});
+
+multipleAutomataTest.onclick = () => {
+    let entries = modal.querySelectorAll('.automataEntry');
+    
+    let nodes = cy.nodes('.automata');
+    let initial = null;
+    automata = new Automata();
+
+    for (let i = 0; i < nodes.length; i++) {
+        let node = nodes[i];
+        let edges = cy.edges(`edge[source="${node.id()}"]`);
+        edges = Object.values(edges).filter((elem, index) => index < edges.length);
+        automata.AddAutomata(node.id(), (edges.map((elem) => elem.data())), node.data('final'));
+        if (node.data('initial')) {
+            if (initial) throw new Error("Can't have two starting points");
+            initial = node.id();
+        }
+    }
+
+    for (let entry of entries) {
+        console.log(entry);
+        if(automata.RunTest(initial, entry.querySelector('.fita').value)){
+            entry.querySelector('#resultFita').innerHTML = 'check_circle';
+            entry.querySelector('#resultFita').style.color = 'green';
+        }else{
+            entry.querySelector('#resultFita').innerHTML = 'cancel';
+            entry.querySelector('#resultFita').style.color = 'red';
+        }
+    }
+}
+
+AddAutomataEntry.onclick = () => {
+    entryList.appendChild(entryProto.clone());
+}
+
+entryProto.clone = function() {
+    let c =  entryProto.cloneNode(true);
+    c.style.display = '';
+    c.className = 'input-field automataEntry';
+    return c;
+}
+
+entryList.appendChild(entryProto.clone());
+

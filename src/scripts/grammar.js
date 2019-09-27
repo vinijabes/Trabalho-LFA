@@ -7,6 +7,7 @@ const grammarContainerRules = grammarContainer.querySelector("#rules");
 const grammarProto = document.getElementById("prototype");
 const entryGrammar = grammarContainer.querySelector("#entry");
 const executeGrammar = grammarContainer.querySelector("#execute");
+const grammarLabel = grammarContainer.querySelector("#grammarLabel");
 
 (grammarProto.querySelector("#rhs")).onfocus = function () {
     if (this.parentNode.parentNode.querySelector("#lhs").value != "") {
@@ -33,7 +34,13 @@ executeGrammar.onclick = function () {
         glud.AddRule(token, rule);
     }
     console.log(glud);
-    console.log(glud.RunTest(initial, entryGrammar.value));
+    if (glud.RunTest(initial, entryGrammar.value)) {
+        grammarLabel.innerHTML = 'check_circle';
+        grammarLabel.style.color = 'green';
+    } else {
+        grammarLabel.innerHTML = 'cancel';
+        grammarLabel.style.color = 'red';
+    }
 }
 
 grammarProto.clone = function () {
