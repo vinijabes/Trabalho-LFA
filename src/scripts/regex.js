@@ -8,7 +8,7 @@ const resultLabel2 = document.querySelector('#resultLabel2');
 const regexInput2 = document.querySelector('#regexInput2');
 
 regexEntry.onkeyup = () => {
-    if(Regex.CreateRegex('^([a-zA-Z0-9^$*()+|.{},]|\[|\])*$').test(regexEntry.value)){
+    if(/^([a-zA-Z0-9^$*()+|.\[\]])*$/.test(regexEntry.value)){
         regexEntryLabel.innerHTML = 'check_circle';
         regexEntryLabel.style.color = 'green';
     }else{
@@ -16,18 +16,28 @@ regexEntry.onkeyup = () => {
         regexEntryLabel.style.color = 'red';
     }
 
-    if(Regex.CreateRegex(regexEntry.value).test(regexInput.value)){
-        resultLabel.innerHTML = 'check_circle';
-        resultLabel.style.color = 'green';
-    }else{
+    try{
+        if(Regex.CreateRegex(regexEntry.value).test(regexInput.value)){
+            resultLabel.innerHTML = 'check_circle';
+            resultLabel.style.color = 'green';
+        }else{
+            resultLabel.innerHTML = 'cancel';
+            resultLabel.style.color = 'red';
+        }
+    }catch(e){
         resultLabel.innerHTML = 'cancel';
         resultLabel.style.color = 'red';
     }
 
-    if(Regex.CreateRegex(regexEntry.value).test(regexInput2.value)){
-        resultLabel2.innerHTML = 'check_circle';
-        resultLabel2.style.color = 'green';
-    }else{
+    try{    
+        if(Regex.CreateRegex(regexEntry.value).test(regexInput2.value)){
+            resultLabel2.innerHTML = 'check_circle';
+            resultLabel2.style.color = 'green';
+        }else{
+            resultLabel2.innerHTML = 'cancel';
+            resultLabel2.style.color = 'red';
+        }
+    }catch(e){
         resultLabel2.innerHTML = 'cancel';
         resultLabel2.style.color = 'red';
     }
