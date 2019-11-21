@@ -422,7 +422,7 @@ initButton.onclick = function (e) {
     }
 
     console.log(automata.automatas);
-
+    automata.ConvertToAFD(initial);
     result = automata.RunTest(initial, fita.value);
     current = 0;
     if (result) {

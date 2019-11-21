@@ -8,7 +8,7 @@ const resultLabel2 = document.querySelector('#resultLabel2');
 const regexInput2 = document.querySelector('#regexInput2');
 
 regexEntry.onkeyup = () => {
-    if(Regex.CreateRegex('^([a-zA-Z0-9^$*()+|.])*$').test(regexEntry.value)){
+    if(Regex.CreateRegex('^([a-zA-Z0-9^$*()+|.{},]|\[|\])*$').test(regexEntry.value)){
         regexEntryLabel.innerHTML = 'check_circle';
         regexEntryLabel.style.color = 'green';
     }else{

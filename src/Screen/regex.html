@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Olá Mundo!</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+
+    <link rel="stylesheet" href="../Assets/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body>
+    <nav>
+        <div class="nav-wrapper">
+            <a href="#!" class="brand-logo">Logo</a>
+            <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="./regex.html">Regex</a></li>
+                <li><a href="./grammar.html">Gramática</a></li>
+                <li><a href="./automata.html">Automato</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <ul class="sidenav" id="mobile-demo">
+        <li><a href="./regex.html">Regex</a></li>
+        <li><a href="./grammar.html">Gramática</a></li>
+        <li><a href="./automata.html">Automato</a></li>
+    </ul>
+
+    <div class="row valign-wrapper" id="prototype" style="display: none; margin-top: 8px">
+        <div class="col s5">
+            <input type="text" id="lhs">
+        </div>
+        <div class="col s1">
+            →
+        </div>
+        <div class="col s5">
+            <input type="text" id="rhs">
+        </div>
+    </div>
+
+    <div class="row" id="regex" style="display: flex; justify-content: center">
+        <div>
+            <h2 style="text-align: center">Expressão Regular</h2>
+            <div>
+                <label style="width: 25%">Expressão: </label>
+                <div class="input-field">
+                    <i class="material-icons prefix" id="entryLabel" style="color:green">check_circle</i>
+                    <input id="regexEntry" class="validate">
+                </div>
+            </div>
+
+            <div>
+                <label for="regexInput">Entrada: </label>
+                <div class="input-field">
+                    <i class="material-icons prefix" id="resultLabel" style="color:green">check_circle</i>
+                    <input id="regexInput" class="validate">
+                </div>
+            </div>
+
+            <div>
+                <label for="regexInput2">Entrada 2: </label>
+                <div class="input-field">
+                    <i class="material-icons prefix" id="resultLabel2" style="color:green">check_circle</i>
+                    <input id="regexInput2" class="validate">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function goTo(link) {
+            const { remote } = require('electron');
+
+        }
+
+        window.require('../scripts/regex.js');        
+    </script>
+
+    <script src="../Assets/js/materialize.min.js"></script>
+</body>
+
+</html>

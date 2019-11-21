@@ -12,7 +12,7 @@
         }
     </style>
 
-    <link rel="stylesheet" href="./src/Assets/css/materialize.min.css">
+    <link rel="stylesheet" href="../Assets/css/materialize.min.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 
@@ -22,30 +22,18 @@
             <a href="#!" class="brand-logo">Logo</a>
             <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
             <ul class="right hide-on-med-and-down">
-                <li><a href="./src/Screen/regex.html">Regex</a></li>
-                <li><a href="./src/Screen/grammar.html">Gramática</a></li>
-                <li><a href="./src/Screen/automata.html">Automato</a></li> 
+                <li><a href="./regex.html">Regex</a></li>
+                <li><a href="./grammar.html">Gramática</a></li>
+                <li><a href="./automata.html">Automato</a></li>
             </ul>
         </div>
     </nav>
 
     <ul class="sidenav" id="mobile-demo">
-        <li><a href="../src/Screen/regex.html">Regex</a></li>
-        <li><a href="./src/Screen/grammar.html">Gramática</a></li>
-        <li><a href="./src/Screen/automata.html">Automato</a></li>
+        <li><a href="./regex.html">Regex</a></li>
+        <li><a href="./grammar.html">Gramática</a></li>
+        <li><a href="./automata.html">Automato</a></li>
     </ul>
-
-    <div class="row valign-wrapper" id="prototype" style="display: none; margin-top: 8px">
-        <div class="col s5">
-            <input type="text" id="lhs">
-        </div>
-        <div class="col s1">
-            →
-        </div>
-        <div class="col s5">
-            <input type="text" id="rhs">
-        </div>
-    </div>
 
     <div id="multipleAutomata" class="modal">
         <div class="modal-content">
@@ -72,49 +60,6 @@
         </div>
     </div>
 
-
-    <div class="row" id="regex" style="display: flex; justify-content: center">
-        <div>
-            <h2 style="text-align: center">Expressão Regular</h2>
-            <div>
-                <label style="width: 25%">Expressão: </label>
-                <div class="input-field">
-                    <i class="material-icons prefix" id="entryLabel" style="color:green">check_circle</i>
-                    <input id="regexEntry" class="validate">
-                </div>
-            </div>
-
-            <div>
-                <label for="regexInput">Entrada: </label>
-                <div class="input-field">
-                    <i class="material-icons prefix" id="resultLabel" style="color:green">check_circle</i>
-                    <input id="regexInput" class="validate">
-                </div>
-            </div>
-
-            <div>
-                <label for="regexInput2">Entrada 2: </label>
-                <div class="input-field">
-                    <i class="material-icons prefix" id="resultLabel2" style="color:green">check_circle</i>
-                    <input id="regexInput2" class="validate">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row" id="grammar" style="display: flex; justify-content: center">
-        <div>
-            <h2 style="text-align: center">Gramática</h2>
-            <div id="rules"></div>
-            <div class="input-field">
-                <i class="material-icons prefix" id="grammarLabel" style="color:green"></i>
-                <input id="entry" style="margin-top: 8px">
-            </div>
-            <a class="waves-effect waves-light btn" id="execute">Executar</a>
-            <div id="grammarResult"></div>
-        </div>
-    </div>
-
     <div style="margin-bottom: 36px">
         <div id="menu" class="card" style="width: 80%; margin-left:auto; margin-right: auto;">
             <div class="card-content" style="margin: 4px">
@@ -135,10 +80,15 @@
     </div>
 
     <script>
-        window.require('./index.js');        
+        function goTo(link) {
+            const { remote } = require('electron');
+
+        }
+
+        window.require('../scripts/automata.js');        
     </script>
 
-    <script src="./src/Assets/js/materialize.min.js"></script>
+    <script src="../Assets/js/materialize.min.js"></script>
 </body>
 
 </html>
