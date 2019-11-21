@@ -294,7 +294,7 @@ module.exports = class Automata {
         let final = 0;
         let finals = [];
         for (let i = 0; i < size; i++) {
-            if(this.automatas[i].final){
+            if (this.automatas[i].final) {
                 final++;
                 finals.push(i);
             }
@@ -309,12 +309,22 @@ module.exports = class Automata {
                 return 0;
             })
             for (let e = 0; e < edges.length; e++) {
-                if(edges[e].data.length > 1){
+                if (edges[e].data.length > 1) {
                     regExp += `(${edges[e].data.join('+')})`;
-                }else if(edges[e].data.length == 1 && edges[e].data.length != 'λ'){
+                } else if (edges[e].data.length == 1 && edges[e].data.length != 'λ') {
                     regExp += `${edges[e].data.join('')}`;
                 }
-                if(edges[e].target == edges[e].source) regExp += '*';
+                if (edges[e].target == edges[e].source) regExp += '*';
+            }
+        }
+
+        for (let i = 0; i < size; i++){
+            let edges = this.automatas[i].edges;
+            for (let e = 0; e < edges.length; e++) {
+                if(parseInt(edges[e].target) == i){
+                    if(edges[e].data.indexOf('λ') != -1) edges[e].data.splice(edges[e].data.indexOf('λ'), 1);
+                    this.automatas[i].regex = `(${edges[e].data.join('|')})*`
+                }
             }
         }
 
