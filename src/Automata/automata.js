@@ -1,4 +1,4 @@
-module.exports = class Glud {
+module.exports = class Automata {
     static REGEX = "^[^A-Z]{0,1}[A-Z]{0,1}$"
 
     constructor() {
@@ -59,7 +59,7 @@ module.exports = class Glud {
                             e.data.splice(e.data.indexOf('λ'), 1);
                             e.label = e.label.replace('λ', '');
                         }
-                        
+
                         if (e.data.length == 0) {
                             this.automatas[current.target].edges.splice(this.automatas[current.target].edges.indexOf(e), 1);
                             i--;
@@ -96,14 +96,15 @@ module.exports = class Glud {
             visitedNodes[i] = true;
         }
 
-        console.log(this.automatas);
+        if (this.vocabulary.indexOf('λ') != -1) this.vocabulary.splice(this.vocabulary.indexOf('λ'), 1);
     }
 
     ConvertToAFD(initial) {
         if (!this.automatas) throw "Need an automata first!";
 
         this.RemoveVoidMoves();
-    
+        console.log(this.automatas);
+
         initial = parseInt(initial) + 1;
 
         //Creating subsets
@@ -119,8 +120,9 @@ module.exports = class Glud {
             for (let c of this.vocabulary) {
                 data.entries[c] = [];
                 for (let e of this.automatas[keys[i]].edges) {
-                    if (c == e.label) {
+                    if (e.data.indexOf(c) != -1) {
                         data.entries[c].push(e.target);
+                        data.entries[c].sort();
                     }
                 }
             }
@@ -141,11 +143,13 @@ module.exports = class Glud {
                     for (let c of this.vocabulary) {
                         data.entries[c] = [...subsets[j].entries[c]];
                         for (let e of this.automatas[keys[i - 1]].edges) {
-                            if (c == e.label && data.entries[c].indexOf(e.target) != -1) {
+                            if (e.data.indexOf(c) != -1 && data.entries[c].indexOf(e.target) == -1) {
                                 data.entries[c].push(e.target);
+                                data.entries[c].sort();
                             }
                         }
                     }
+
                     subsets.push(data);
                 }
             }
@@ -181,13 +185,13 @@ module.exports = class Glud {
             let current = queue.shift();
             visited[current] = true;
             let data = { edges: [] };
-            console.log(subsets[current], current, subsets);
             if (subsets[current].final) data.final = subsets[current].final;
             if (current == initial) data.initial = true;
 
             for (let e in subsets[current].entries) {
-                if (subsets[current].entries[e] != 0 && !visited[subsets[current].entries[e]]) {
-                    queue.push(subsets[current].entries[e]);
+                if (subsets[current].entries[e] != 0) {
+                    if (!visited[subsets[current].entries[e]])
+                        queue.push(subsets[current].entries[e]);
                     data.edges.push({ source: current - 1, target: subsets[current].entries[e] - 1, id: `${current - 1}_${subsets[current].entries[e] - 1}`, label: e, data: [e] });
                 }
             }
@@ -195,7 +199,126 @@ module.exports = class Glud {
             afd[current - 1] = data;
         }
 
+        console.log(subsets);
         console.log(afd);
+
+        return afd;
+    }
+
+    _Djikstra(initial) {
+        let distances = {};
+        let prev = {};
+        let pq = [];
+
+        distances[initial] = 0;
+        pq.push({ node: initial, weight: 0 });
+        pq.sort((a, b) => {
+            if (a.weight < b.weight) return -1;
+            if (a.weight > b.weight) return 1;
+            return 0;
+        })
+
+        for (let a in this.automatas) {
+            if (a != initial) distances[a] = Infinity;
+            prev[a] = null;
+        }
+
+        while (pq.length) {
+            let minNode = pq.shift();
+            let currNode = minNode.node;
+            for (let e of this.automatas[currNode].edges) {
+                let alt = distances[currNode] + 1;
+                if (alt < distances[e.target]) {
+                    distances[e.target] = alt;
+                    prev[e.target] = currNode;
+                    pq.push({ node: e.target, weight: distances[e.target] });
+                    pq.sort((a, b) => {
+                        if (a.weight < b.weight) return -1;
+                        if (a.weight > b.weight) return 1;
+                        return 0;
+                    })
+                }
+            }
+        }
+
+        return distances;
+    }
+
+    RemoveUnreachableNodes(initial) {
+        let distances = this._Djikstra(initial);
+        for (let d in distances) {
+            if (distances[d] == Infinity) {
+                let keys = Object.keys(this.automatas)
+                for (let a of keys) {
+                    let edges = this.automatas[a].edges
+                    for (let e = 0; e < edges.length; e++) {
+                        if (edges[e].target == d) {
+                            edges.splice(e, 1);
+                            e--;
+                        }
+                    }
+                }
+
+                delete this.automatas[d];
+            }
+        }
+    }
+
+    ConvertToGrammar(initial) {
+        this.RemoveUnreachableNodes(initial);
+
+        let keys = Object.keys(this.automatas);
+        let size = keys.length;
+
+        let rules = {};
+        for (let i = 0; i < size; i++) {
+            let edges = this.automatas[i].edges;
+            rules[String.fromCharCode(65 + i)] = [];
+            if (this.automatas[i].final) rules[String.fromCharCode(65 + i)].push("");
+            for (let e = 0; e < edges.length; e++) {
+                for (let d = 0; d < edges[e].data.length; d++) {
+                    rules[String.fromCharCode(65 + i)].push(`${edges[e].data[d] == 'λ' ? '' : edges[e].data[d]}${String.fromCharCode(65 + parseInt(edges[e].target))}`)
+                }
+            }
+        }
+
+        return rules;
+    }
+
+    ConvertToRegex(initial) {
+        this.RemoveUnreachableNodes(initial);
+
+        let keys = Object.keys(this.automatas);
+        let size = keys.length;
+
+        let final = 0;
+        let finals = [];
+        for (let i = 0; i < size; i++) {
+            if(this.automatas[i].final){
+                final++;
+                finals.push(i);
+            }
+        }
+
+        let regExp = "";
+        for (let i = 0; i < size; i++) {
+            let edges = this.automatas[i].edges;
+            edges.sort((a, b) => {
+                if (parseInt(a.target) < parseInt(b.target)) return -1;
+                if (parseInt(a.target) > parseInt(b.target)) return 1;
+                return 0;
+            })
+            for (let e = 0; e < edges.length; e++) {
+                if(edges[e].data.length > 1){
+                    regExp += `(${edges[e].data.join('+')})`;
+                }else if(edges[e].data.length == 1 && edges[e].data.length != 'λ'){
+                    regExp += `${edges[e].data.join('')}`;
+                }
+                if(edges[e].target == edges[e].source) regExp += '*';
+            }
+        }
+
+        console.log(regExp);
     }
 
     RunTest(initial, str) {

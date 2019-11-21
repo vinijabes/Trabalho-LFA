@@ -2,6 +2,8 @@ const cytoscape = require('cytoscape');
 const edgehandles = require('cytoscape-edgehandles');
 const cxtmenu = require('cytoscape-cxtmenu');
 const prompt = require('electron-prompt');
+const ipcRenderer = require('electron').ipcRenderer;
+const BrowserWindow = require('electron').remote.BrowserWindow;
 
 const Automata = require('../Automata').Automata;
 
@@ -41,7 +43,8 @@ var cy = cytoscape({
         {
             selector: 'node',
             style: {
-                'background-color': '#888'
+                'background-color': '#888',
+                'label': 'data(id)'
             }
         },
 
@@ -67,7 +70,8 @@ var cy = cytoscape({
                 'shape': 'ellipse',
                 'overlay-opacity': 0,
                 'border-width': 12, // makes the handle easier to hit
-                'border-opacity': 0
+                'border-opacity': 0,
+                "label": ""
             }
         },
 
@@ -153,7 +157,7 @@ var cy = cytoscape({
             selector: ".active-automata",
             style: {
                 "border-width": "2px",
-                "border-color": "red"
+                "border-color": "red",
             }
         },
 
@@ -334,10 +338,31 @@ let second = null;
 let panning = false;
 let nodeId = 0;
 
-for (let option of document.querySelectorAll('#menu a'))
+function addNode(id, position, initial, final) {
+    let classes = ['automata'];
+    if (initial) classes.push('initial-automata');
+    if (final) classes.push('final-automata');
+
+    cy.add({
+        group: 'nodes',
+        data: { id, initial, final },
+        position: position,
+        classes: classes
+    });
+}
+
+function addEdge(source, target, id, data) {
+    cy.add({
+        group: 'edges',
+        data: { id: id, source, target, data, label: data.join(" ") },
+    });
+}
+
+for (let option of document.querySelectorAll('#menu a')) {
     option.onclick = function (e) {
         selectedOption = this.dataset.opt;
     }
+}
 
 cy.on('mousedown', 'node', function (e) {
     first = this.id();
@@ -369,19 +394,11 @@ cy.on('mousedown', function (e) {
 
 cy.on('mouseup', function (e) {
     if (selectedOption == options.ADD_NODE && !first && !second && !panning) {
-        cy.add({
-            group: 'nodes',
-            data: { id: nodeId++ },
-            position: e.position,
-            classes: 'automata'
-        });
+        addNode(nodeId++, e.position);
     }
 
     if (selectedOption == options.ADD_EDGE && first && second) {
-        cy.add({
-            group: 'edges',
-            data: { id: nodeId++, source: first, target: second },
-        });
+        addEdge(first, second, nodeId++)
     }
 
     first = null;
@@ -399,12 +416,33 @@ document.onmousemove = (e) => {
 const fita = document.getElementById('fita');
 const initButton = document.getElementById('init');
 const nextButton = document.getElementById('next');
+const convertButton = document.getElementById('convert');
+const convertGrammarButton = document.getElementById('convertGrammar');
+const convertRegexButton = document.getElementById('convertRegex');
 let automata = new Automata();
 
 fita.value = "";
 
 let result = null;
 let current = 0;
+
+function BuildAF(data) {
+    cy.elements().remove();
+
+    for (let a in data) {
+        addNode(a, null, data[a].initial, data[a].final);
+    }
+
+    for (let a in data) {
+        for (let e of data[a].edges) {
+            addEdge(e.source, e.target, e.id, e.data);
+        }
+    }
+
+    cy.layout({ name: "circle" }).run();
+    cy.fit();
+    cy.reset();
+}
 
 initButton.onclick = function (e) {
     automata = new Automata();
@@ -421,8 +459,6 @@ initButton.onclick = function (e) {
         }
     }
 
-    console.log(automata.automatas);
-    automata.ConvertToAFD(initial);
     result = automata.RunTest(initial, fita.value);
     current = 0;
     if (result) {
@@ -430,6 +466,101 @@ initButton.onclick = function (e) {
         cy.edges(`edge#${result[current]}_${result[current + 1]}`).addClass('active-edge');
         nextButton.removeAttribute("disabled");
     }
+}
+
+convertButton.onclick = function (e) {
+    automata = new Automata();
+    let nodes = cy.nodes('.automata');
+    let initial = null;
+    for (let i = 0; i < nodes.length; i++) {
+        let node = nodes[i];
+        let edges = cy.edges(`edge[source="${node.id()}"]`);
+        edges = Object.values(edges).filter((elem, index) => index < edges.length);
+        automata.AddAutomata(node.id(), (edges.map((elem) => elem.data())), node.data('final'));
+        if (node.data('initial')) {
+            if (initial) throw new Error("Can't have two starting points");
+            initial = node.id();
+        }
+    }
+
+    let AFDWindow = new BrowserWindow({
+        width: 800,
+        height: 800,
+        show: true,
+        webPreferences: {
+            nodeIntegration: true
+        }
+    })
+    AFDWindow.loadURL(`file://${__dirname}/../Screen/automata.html`);
+
+    AFDWindow.webContents.once('did-finish-load', () => {
+        let afd = automata.ConvertToAFD(initial);
+        AFDWindow.webContents.send('build', afd);
+    })
+}
+
+convertGrammarButton.onclick = function (e) {
+    automata = new Automata();
+    let nodes = cy.nodes('.automata');
+    let initial = null;
+    for (let i = 0; i < nodes.length; i++) {
+        let node = nodes[i];
+        let edges = cy.edges(`edge[source="${node.id()}"]`);
+        edges = Object.values(edges).filter((elem, index) => index < edges.length);
+        automata.AddAutomata(node.id(), (edges.map((elem) => elem.data())), node.data('final'));
+        if (node.data('initial')) {
+            if (initial) throw new Error("Can't have two starting points");
+            initial = node.id();
+        }
+    }
+
+    let AFDWindow = new BrowserWindow({
+        width: 800,
+        height: 800,
+        show: true,
+        webPreferences: {
+            nodeIntegration: true
+        }
+    })
+    AFDWindow.loadURL(`file://${__dirname}/../Screen/grammar.html`);
+
+    AFDWindow.webContents.once('did-finish-load', () => {
+        let glud = automata.ConvertToGrammar(initial);
+        AFDWindow.webContents.send('build', glud);
+    })
+}
+
+convertRegexButton.onclick = function (e) {
+    automata = new Automata();
+    let nodes = cy.nodes('.automata');
+    let initial = null;
+    for (let i = 0; i < nodes.length; i++) {
+        let node = nodes[i];
+        let edges = cy.edges(`edge[source="${node.id()}"]`);
+        edges = Object.values(edges).filter((elem, index) => index < edges.length);
+        automata.AddAutomata(node.id(), (edges.map((elem) => elem.data())), node.data('final'));
+        if (node.data('initial')) {
+            if (initial) throw new Error("Can't have two starting points");
+            initial = node.id();
+        }
+    }
+
+    console.log(automata.ConvertToRegex(initial));
+
+    // let AFDWindow = new BrowserWindow({
+    //     width: 800,
+    //     height: 800,
+    //     show: true,
+    //     webPreferences: {
+    //         nodeIntegration: true
+    //     }
+    // })
+    // AFDWindow.loadURL(`file://${__dirname}/../Screen/grammar.html`);
+
+    // AFDWindow.webContents.once('did-finish-load', () => {
+    //     let glud = automata.ConvertToGrammar(initial);
+    //     AFDWindow.webContents.send('build', glud);
+    // })
 }
 
 nextButton.onclick = function (e) {
@@ -452,7 +583,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 multipleAutomataTest.onclick = () => {
     let entries = modal.querySelectorAll('.automataEntry');
-    
+
     let nodes = cy.nodes('.automata');
     let initial = null;
     automata = new Automata();
@@ -470,10 +601,10 @@ multipleAutomataTest.onclick = () => {
 
     for (let entry of entries) {
         console.log(entry);
-        if(automata.RunTest(initial, entry.querySelector('.fita').value)){
+        if (automata.RunTest(initial, entry.querySelector('.fita').value)) {
             entry.querySelector('#resultFita').innerHTML = 'check_circle';
             entry.querySelector('#resultFita').style.color = 'green';
-        }else{
+        } else {
             entry.querySelector('#resultFita').innerHTML = 'cancel';
             entry.querySelector('#resultFita').style.color = 'red';
         }
@@ -484,8 +615,8 @@ AddAutomataEntry.onclick = () => {
     entryList.appendChild(entryProto.clone());
 }
 
-entryProto.clone = function() {
-    let c =  entryProto.cloneNode(true);
+entryProto.clone = function () {
+    let c = entryProto.cloneNode(true);
     c.style.display = '';
     c.className = 'input-field automataEntry';
     return c;
@@ -493,3 +624,7 @@ entryProto.clone = function() {
 
 entryList.appendChild(entryProto.clone());
 
+ipcRenderer.on('build', (e, data) => {
+    BuildAF(data);
+    console.log(data);
+})

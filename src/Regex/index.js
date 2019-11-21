@@ -3,3 +3,7 @@ module.exports.CreateRegex = (regexString) => {
     regex.compile(regexString, "g");
     return regex;
 }
+
+module.exports.ConvertToAF = (regexString) => {
+    
+}

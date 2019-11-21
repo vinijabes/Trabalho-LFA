@@ -7,17 +7,12 @@ module.exports = class Glud {
 
     AddRule(token, rule) {
         if (token == "") return;
-        let lower = 0;
-        let upper = 0;
-        for (let c of rule) {
-            if (c.toUpperCase() == c)++upper;
-            if (c.toLowerCase() == c) {
-                if (upper) throw new Error("Invalid Glud Rule!");
-                ++lower;
-            }
+        if (rule.length > 2) throw new Error("Invalid Glud Rule!");
+        if (rule.length == 2) {
+            if (/[A-Z]/.test(rule[0])) throw new Error("Invalid Glud Rule!");
+            if (/[^A-Z]/.test(rule[1])) throw new Error("Invalid Glud Rule!");
         }
 
-        if (upper > 1 || lower > 1 || rule.length > 2) throw new Error("Invalid Glud Rule!");
 
         if (!this.rules[token]) this.rules[token] = [rule];
         else this.rules[token].push(rule);
@@ -46,6 +41,7 @@ module.exports = class Glud {
     }
 
     RunTest(initial, str) {
+        console.log(this.rules);
         let queue = [];
         let map = {};
 
@@ -64,7 +60,7 @@ module.exports = class Glud {
                 }
             }
 
-            if (canAdd){
+            if (canAdd) {
                 queue.push({ str: baseString, index: charIndex });
             }
         }
@@ -93,7 +89,7 @@ module.exports = class Glud {
                 }
             }
 
-            if (currentIndex == -1 || nextToken != nextToken.toUpperCase()) {
+            if (currentIndex == -1 || nextToken != nextToken.toUpperCase() || Number.isInteger(nextToken)) {
                 continue;
             }
 
@@ -102,5 +98,76 @@ module.exports = class Glud {
             }
         }
         return false;
+    }
+
+    ConvertToAF(initial) {
+        let visited = new Array(this.rules.length).fill(false);
+        let queue = [initial];
+
+        let states = {};
+        for (let r in this.rules) {
+            states[r] = { edges: [] };
+        }
+        states['final'] = { final: true, edges: [] };
+
+        while (queue.length) {
+            let current = queue.shift();
+            if (visited[current]) continue;
+            visited[current] = true;
+
+            if (current == initial) {
+                states[current].initial = true;
+            }
+
+            for (let rule of this.rules[current]) {
+                let data = 'λ';
+                let target = null;
+                if (rule.length == 2) {
+                    data = rule[0];
+                    target = rule[1];
+                } else if (rule.length == 1) {
+                    if (!Number.isInteger(rule[0]) && rule[0] == rule[0].toUpperCase()) {
+                        target = rule[0];
+                    } else {
+                        data = rule[0];
+                        target = 'final';
+                    }
+                } else {
+                    target = 'final';
+                }
+
+                console.log(rule, data, target);
+
+                states[current].edges.push({ source: current, target, data: [data] });
+
+                if (target != 'final') {
+                    queue.push(target);
+                }
+            }
+        }
+
+        let keys = Object.keys(states);
+        let size = keys.length;
+        let finalStates = {};
+        for (let i = 0; i < size; i++) {
+            finalStates[i] = states[keys[i]];
+            for (let e of finalStates[i].edges) {
+                e.source = i;
+                e.target = keys.indexOf(e.target);
+            }
+
+            for (let x = 0; x < finalStates[i].edges.length; x++) {
+                for (let j = x + 1; j < finalStates[i].edges.length; j++) {
+                    if (finalStates[i].edges[x].target == finalStates[i].edges[j].target) {                        
+                        finalStates[i].edges[x].data = [...finalStates[i].edges[x].data, ...finalStates[i].edges[j].data];
+                        finalStates[i].edges.splice(j, 1);
+                        --j;
+                    }
+                }
+            }
+        }
+
+        console.log(states);
+        return finalStates;
     }
 }
