@@ -4,6 +4,9 @@ const cxtmenu = require('cytoscape-cxtmenu');
 const prompt = require('electron-prompt');
 const ipcRenderer = require('electron').ipcRenderer;
 const BrowserWindow = require('electron').remote.BrowserWindow;
+const dialog = require('electron').remote.dialog;
+var fs = require('fs');
+const { parseString } = require('xml2js');
 
 const Automata = require('../Automata').Automata;
 
@@ -414,6 +417,8 @@ document.onmousemove = (e) => {
 };
 
 const fita = document.getElementById('fita');
+const openButton = document.getElementById('open');
+const saveButton = document.getElementById('save');
 const initButton = document.getElementById('init');
 const nextButton = document.getElementById('next');
 const convertButton = document.getElementById('convert');
@@ -628,3 +633,105 @@ ipcRenderer.on('build', (e, data) => {
     BuildAF(data);
     console.log(data);
 })
+
+var opts = {
+    title: "Save file",
+    defaultPath: "./automato",
+    buttonLabel: "Save",
+
+    filters: [
+        { name: 'JFlap', extensions: ['jff',] },
+        { name: 'All Files', extensions: ['*'] }
+    ]
+}
+
+
+openButton.onclick = () => {
+    dialog.showOpenDialog(opts, (filename) => {
+        console.log(filename);
+        fs.readFile(filename[0], "utf8", (err, data) => {
+            parseString(data, function (err, result) {
+                let states = result.structure.automaton[0].state;
+                let edges = result.structure.automaton[0].transition;
+                let automata = {};
+                for (let state of states) {
+                    let s = state.$.id;
+                    automata[s] = { edges: [] }
+                    if (state.initial) automata[s].initial = true;
+                    if (state.final) automata[s].final = true;
+
+                    for (let e of edges) {
+                        if (e.from[0] == s) {
+                            let newEdge = true;
+                            for (let i of automata[s].edges) {
+                                if (i.id == `${s}_${e.to[0]}`) {
+                                    newEdge = false;
+                                    i.label += e.read.join(" ");
+                                    i.data = [...i.data, ...e.read];
+                                }
+                            }
+                            if (newEdge)
+                                automata[s].edges.push({ source: s, target: e.to[0], id: `${s}_${e.to[0]}`, label: e.read.join(" "), data: e.read });
+                        }
+                    }
+                }
+                BuildAF(automata);
+            });
+        });
+    })
+}
+
+saveButton.onclick = () => {
+    dialog.showSaveDialog(opts, (filename) => {
+        if (filename !== undefined && filename != "") {
+            automata = new Automata();
+            let nodes = cy.nodes('.automata');
+            let initial = null;
+            for (let i = 0; i < nodes.length; i++) {
+                let node = nodes[i];
+                let edges = cy.edges(`edge[source="${node.id()}"]`);
+                edges = Object.values(edges).filter((elem, index) => index < edges.length);
+                automata.AddAutomata(node.id(), (edges.map((elem) => elem.data())), node.data('final'));
+                if (node.data('initial')) {
+                    if (initial) throw new Error("Can't have two starting points");
+                    initial = node.id();
+                }
+            }
+            console.log(automata.automatas);
+
+            let states = [];
+            let transitions = [];
+
+            for (let i in automata.automatas) {
+                states.push({ id: i, initial: automata.automatas.initial, final: automata.automatas.final });
+                for (let e of automata.automatas[i].edges) {
+                    console.log(e);
+                    for (let d of e.data) {
+                        console.log(d);
+                        transitions.push({ from: i, to: e.target, read: d });
+                    }
+                }
+            }
+
+            console.log(states, transitions);
+
+            let text = `<?xml version="1.0" encoding="UTF-8" standalone="no"?><!--Created with JFLAP 7.1.-->\n<structure>&#13;\n<type>fa</type>&#13;\n<automaton>&#13;\n`;
+            for (let s in states) {
+                text += `<state id="${s}" name="${states[s]}">&#13;\n`;
+                if (states[s].initial) text += `<initial/>&#13;\n`;
+                if (states[s].final) text += `<final/>&#13;\n`;
+            }
+
+            for (let t of transitions) {
+                text += `<transition>&#13;\n`;
+                text += `<from>${t.from}</from>&#13;\n`;
+                text += `<to>${t.to}</to>&#13;\n`;
+                text += `<read>${t.read}</read>&#13;\n`;
+                text += `</transition>&#13;\n`;
+            }
+            text += `</automaton>&#13;\n</structure>`;
+
+            fs.writeFileSync(filename, text, 'utf-8');
+        }
+    })
+}
