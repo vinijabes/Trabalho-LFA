@@ -92,18 +92,6 @@
                         <div class="col s4">
                             <a style="width: 100%;" class="waves-effect waves-light btn" id='next' disabled>Próximo</a>
                         </div>
-                        <div class="col s4">
-                            <a style="width: 100%;" class="waves-effect waves-light btn" id='convert'>Converter para
-                                AFD</a>
-                        </div>
-                        <div class="col s4">
-                            <a style="width: 100%;" class="waves-effect waves-light btn" id='convertGrammar'>Converter
-                                para GLUD</a>
-                        </div>
-                        <div class="col s4">
-                            <a style="width: 100%;" class="waves-effect waves-light btn" id='convertRegex'>Converter
-                                REGEX</a>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -112,13 +100,74 @@
         </div>
     </div>
 
+    <a class="waves-effect waves-light btn modal-trigger" href="#modal1">Modal</a>
+
+    <!-- Modal Structure -->
+    <div id="modal1" class="modal">
+        <div class="modal-content">
+            <div id="taperules">
+                <div class="taperule row" style="justify-content: space-between;">
+                    <div class="row">
+                        <h5>Tape 1</h5>
+                    </div>
+                    <div class="row">
+                        <div class="col s2 offset-s1 input-field">
+                            <input id="read">
+                            <label class="active" for="read">Read</label>
+                        </div>
+                        <div class="col s2 offset-s2 input-field">
+                            <input id="write">
+                            <label class="active" for="write">Write</label>
+                        </div>
+                        <div class="col s2 offset-s2 input-field">
+                            <select id="move">
+                                <option value="L">L</option>
+                                <option value="S">S</option>
+                                <option value="R">R</option>
+                            </select>
+                            <label>Movement</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="taperule row" style="justify-content: space-between;">
+                    <div class="row">
+                        <h5>Tape 2</h5>
+                    </div>
+                    <div class="row">
+                        <div class="col s2 offset-s1 input-field">
+                            <input id="read">
+                            <label class="active" for="read">Read</label>
+                        </div>
+                        <div class="col s2 offset-s2 input-field">
+                            <input id="write">
+                            <label class="active" for="write">Write</label>
+                        </div>
+                        <div class="col s2 offset-s2 input-field">
+                            <select id="move">
+                                <option value="L">L</option>
+                                <option value="S">S</option>
+                                <option value="R">R</option>
+                            </select>
+                            <label>Movement</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a id="accept" href="#!" class="modal-close waves-effect waves-green btn-flat">Agree</a>
+            <a id="reject" href="#!" class="modal-close waves-effect waves-green btn-flat">Reject</a>
+        </div>
+    </div>
+
+
     <script>
         function goTo(link) {
             const { remote } = require('electron');
 
         }
 
-        window.require('../scripts/automata.js');        
+        window.require('../scripts/turing.js');        
     </script>
 
     <script src="../Assets/js/materialize.min.js"></script>
