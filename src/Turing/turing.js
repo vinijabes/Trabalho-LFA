@@ -1,4 +1,4 @@
-module.exports = class Automata {
+module.exports = class Turing {
     static REGEX = "^[^A-Z]{0,1}[A-Z]{0,1}$"
 
     constructor() {
@@ -7,204 +7,15 @@ module.exports = class Automata {
     }
 
     AddAutomata(id, edges, final = false) {
-        for (let edge of edges) {
-            edge.data.sort((a, b) => {
-                if (a == 'λ' || a == '') return -1;
-                if (b == 'λ' || b == '') return 1;
-                return 0;
-            })
-
-            for (let c of edge.data) {
-                if (this.vocabulary.indexOf(c) == -1) this.vocabulary.push(c);
-            }
-        }
+        console.log(edges)
+        // for (let edge of edges) {
+        //     for (let c of edge.data) {
+        //         if (this.vocabulary.indexOf(c) == -1) this.vocabulary.push(c);
+        //     }
+        // }
         this.machine[id] = { edges, final };
     }
-
-    ArraysEqual(a, b) {
-        if (a === b) return true;
-        if (a == null || b == null) return false;
-        if (a.length != b.length) return false;
-
-        // If you don't care about the order of the elements inside
-        // the array, you should sort both arrays here.
-        // Please note that calling sort on an array will modify that array.
-        // you might want to clone your array first.
-
-        for (var i = 0; i < a.length; ++i) {
-            if (a[i] !== b[i]) return false;
-        }
-        return true;
-    }
-
-    RemoveVoidMoves(initial) {
-        if (!this.machine) throw "Need an automata first!";
-
-        let visitedNodes = new Array(this.machine.length).fill(false);
-        let stack = [];
-        let queue = [];
-
-        let keys = Object.keys(this.machine);
-        let size = keys.length;
-        for (let i = 0; i < size; i++) {
-            if (visitedNodes[i]) continue;
-            queue.push({ target: keys[i], stack: [keys[i]] });
-            while (queue.length) {
-                let current = queue.pop();
-                stack = current.stack;
-                for (let i = 0; i < this.machine[current.target].edges.length; i++) {
-                    let e = this.machine[current.target].edges[i];
-                    if (e.data.indexOf('λ') != -1) {
-                        while (e.data.indexOf('λ') != -1) {
-                            e.data.splice(e.data.indexOf('λ'), 1);
-                            e.label = e.label.replace('λ', '');
-                        }
-
-                        if (e.data.length == 0) {
-                            this.machine[current.target].edges.splice(this.machine[current.target].edges.indexOf(e), 1);
-                            i--;
-                        }
-
-                        if (this.machine[e.target].final) {
-                            for (let source of stack) {
-                                this.machine[source].final = true;
-                            }
-                        }
-
-                        for (let adjEdge of this.machine[e.target].edges) {
-                            for (let source of stack) {
-                                if (adjEdge.source != source) {
-                                    let edge = { source, target: adjEdge.target, label: adjEdge.label, data: adjEdge.data };
-                                    if (edge.data.indexOf('λ') == -1)
-                                        this.machine[source].edges.push(edge)
-                                    else if (edge.data.length > 1) {
-                                        edge.label = edge.label.replace('λ', '');
-                                        edge.data.splice(edge.data.indexOf('λ'), 1);
-                                        this.machine[source].edges.push(edge)
-                                    }
-                                }
-                            }
-                        }
-                        if (!visitedNodes[keys.indexOf(e.target)]) {
-                            queue.push({ target: e.target, stack: [...stack, e.target] });
-                            visitedNodes[keys.indexOf(e.target)] = true;
-                        }
-                    }
-                }
-            }
-            stack = [];
-            visitedNodes[i] = true;
-        }
-
-        if (this.vocabulary.indexOf('λ') != -1) this.vocabulary.splice(this.vocabulary.indexOf('λ'), 1);
-    }
-
-    ConvertToAFD(initial) {
-        if (!this.machine) throw "Need an automata first!";
-
-        this.RemoveVoidMoves();
-        console.log(this.machine);
-
-        initial = parseInt(initial) + 1;
-
-        //Creating subsets
-        let subsets = [[]];
-        let level = 0;
-        let levelIndex = 1;
-        let lastLevelIndex = 0;
-        let keys = Object.keys(this.machine);
-        let size = keys.length;
-        for (let i = 0; i < size; i++) {
-            let data = { subset: [keys[i]], entries: {} };
-            if (this.machine[keys[i]].final) data.final = this.machine[keys[i]].final;
-            for (let c of this.vocabulary) {
-                data.entries[c] = [];
-                for (let e of this.machine[keys[i]].edges) {
-                    if (e.data.indexOf(c) != -1) {
-                        data.entries[c].push(e.target);
-                        data.entries[c].sort();
-                    }
-                }
-            }
-            subsets.push(data);
-        }
-
-        lastLevelIndex = levelIndex;
-        levelIndex = levelIndex + size;
-        level = 1;
-
-        while (levelIndex < Math.pow(2, size)) {
-            for (let j = lastLevelIndex; j < levelIndex; j++) {
-                for (let i = j - lastLevelIndex + level + 1; i <= size; i++) {
-                    let data = { subset: [...subsets[j].subset, keys[i - 1]], entries: {} };
-
-                    if (subsets[j].final) data.final = subsets[j].final;
-                    if (subsets[i].final) data.final = subsets[i].final;
-                    for (let c of this.vocabulary) {
-                        data.entries[c] = [...subsets[j].entries[c]];
-                        for (let e of this.machine[keys[i - 1]].edges) {
-                            if (e.data.indexOf(c) != -1 && data.entries[c].indexOf(e.target) == -1) {
-                                data.entries[c].push(e.target);
-                                data.entries[c].sort();
-                            }
-                        }
-                    }
-
-                    subsets.push(data);
-                }
-            }
-            lastLevelIndex = levelIndex;
-            levelIndex += size - level;
-            ++level;
-            if (level >= size) break;
-        }
-
-        for (let i = 0; i < subsets.length; i++) {
-            for (let c of this.vocabulary) {
-                if (subsets[i].length != 0 && subsets[i].entries[c].length == 0) subsets[i].entries[c] = 0;
-                for (let j = 0; j < subsets.length; j++) {
-                    if (subsets[i].length == 0) continue;
-                    if (this.ArraysEqual(subsets[i].entries[c], subsets[j].subset)) {
-                        subsets[i].entries[c] = j;
-                        continue;
-                    }
-                }
-            }
-        }
-
-        for (let i = 0; i < subsets.length; i++) {
-            subsets[i].subset = i;
-        }
-
-        let afd = {};
-        let queue = [initial];
-
-        let visited = new Array(subsets.length).fill(false);
-
-        while (queue.length) {
-            let current = queue.shift();
-            visited[current] = true;
-            let data = { edges: [] };
-            if (subsets[current].final) data.final = subsets[current].final;
-            if (current == initial) data.initial = true;
-
-            for (let e in subsets[current].entries) {
-                if (subsets[current].entries[e] != 0) {
-                    if (!visited[subsets[current].entries[e]])
-                        queue.push(subsets[current].entries[e]);
-                    data.edges.push({ source: current - 1, target: subsets[current].entries[e] - 1, id: `${current - 1}_${subsets[current].entries[e] - 1}`, label: e, data: [e] });
-                }
-            }
-
-            afd[current - 1] = data;
-        }
-
-        console.log(subsets);
-        console.log(afd);
-
-        return afd;
-    }
-
+    
     _Djikstra(initial) {
         let distances = {};
         let prev = {};
@@ -264,75 +75,10 @@ module.exports = class Automata {
         }
     }
 
-    ConvertToGrammar(initial) {
-        this.RemoveUnreachableNodes(initial);
-
-        let keys = Object.keys(this.machine);
-        let size = keys.length;
-
-        let rules = {};
-        for (let i = 0; i < size; i++) {
-            let edges = this.machine[i].edges;
-            rules[String.fromCharCode(65 + i)] = [];
-            if (this.machine[i].final) rules[String.fromCharCode(65 + i)].push("");
-            for (let e = 0; e < edges.length; e++) {
-                for (let d = 0; d < edges[e].data.length; d++) {
-                    rules[String.fromCharCode(65 + i)].push(`${edges[e].data[d] == 'λ' ? '' : edges[e].data[d]}${String.fromCharCode(65 + parseInt(edges[e].target))}`)
-                }
-            }
-        }
-
-        return rules;
-    }
-
-    ConvertToRegex(initial) {
-        this.RemoveUnreachableNodes(initial);
-
-        let keys = Object.keys(this.machine);
-        let size = keys.length;
-
-        let final = 0;
-        let finals = [];
-        for (let i = 0; i < size; i++) {
-            if (this.machine[i].final) {
-                final++;
-                finals.push(i);
-            }
-        }
-
-        let regExp = "";
-        for (let i = 0; i < size; i++) {
-            let edges = this.machine[i].edges;
-            edges.sort((a, b) => {
-                if (parseInt(a.target) < parseInt(b.target)) return -1;
-                if (parseInt(a.target) > parseInt(b.target)) return 1;
-                return 0;
-            })
-            for (let e = 0; e < edges.length; e++) {
-                if (edges[e].data.length > 1) {
-                    regExp += `(${edges[e].data.join('+')})`;
-                } else if (edges[e].data.length == 1 && edges[e].data.length != 'λ') {
-                    regExp += `${edges[e].data.join('')}`;
-                }
-                if (edges[e].target == edges[e].source) regExp += '*';
-            }
-        }
-
-        for (let i = 0; i < size; i++){
-            let edges = this.machine[i].edges;
-            for (let e = 0; e < edges.length; e++) {
-                if(parseInt(edges[e].target) == i){
-                    if(edges[e].data.indexOf('λ') != -1) edges[e].data.splice(edges[e].data.indexOf('λ'), 1);
-                    this.machine[i].regex = `(${edges[e].data.join('|')})*`
-                }
-            }
-        }
-
-        console.log(regExp);
-    }
-
     RunTest(initial, str) {
         let queue = [];
+
+        console.log(this.machine)
 
         queue.push({ automata: initial, index: 0, path: [{ node: initial, index: 0 }] });
         while (queue.length > 0) {

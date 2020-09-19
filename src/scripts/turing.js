@@ -8,7 +8,7 @@ const dialog = require('electron').remote.dialog;
 var fs = require('fs');
 const { parseString } = require('xml2js');
 
-const Automata = require('../Automata').Automata;
+const Turing = require('../Turing').Turing;
 
 const modal = document.querySelector('#multipleAutomata');
 const inputModal = document.querySelector('#modal1')
@@ -37,12 +37,12 @@ function requestInput() {
             let inputs = inputModal.querySelectorAll("#taperules .taperule")
             let converted = []
 
-            for(let i = 0; i < inputs.length; ++i){
+            for (let i = 0; i < inputs.length; ++i) {
                 let read = inputs[i].querySelector("#read").value;
                 let write = inputs[i].querySelector("#write").value;
                 let move = inputs[i].querySelector("#move").value;
 
-                converted.push({read, write, move})
+                converted.push({ read, write, move })
             }
 
             resolve(converted);
@@ -256,11 +256,11 @@ let defaultsEdges = {
                 cy.remove(addedEles);
             } else {
                 let label = ''
-                for(let i = 0; i < r.length; ++i){
+                for (let i = 0; i < r.length; ++i) {
                     if (r[i].read == '') r[i].read = 'λ';
                     if (r[i].write == '') r[i].write = 'λ';
 
-                    if(i != 0) label += '|'
+                    if (i != 0) label += '|'
                     label += r[i].read;
                     label += ';' + r[i].write;
                     label += ';' + r[i].move;
@@ -455,7 +455,7 @@ const nextButton = document.getElementById('next');
 const convertButton = document.getElementById('convert');
 const convertGrammarButton = document.getElementById('convertGrammar');
 const convertRegexButton = document.getElementById('convertRegex');
-let automata = new Automata();
+let automata = new Turing();
 
 fita.value = "";
 
@@ -481,14 +481,33 @@ function BuildAF(data) {
 }
 
 initButton.onclick = function (e) {
-    automata = new Automata();
+    automata = new Turing();
     let nodes = cy.nodes('.automata');
     let initial = null;
     for (let i = 0; i < nodes.length; i++) {
         let node = nodes[i];
         let edges = cy.edges(`edge[source="${node.id()}"]`);
         edges = Object.values(edges).filter((elem, index) => index < edges.length);
-        automata.AddAutomata(node.id(), (edges.map((elem) => elem.data())), node.data('final'));
+        edges = edges.map((elem) => {
+            return {
+                from: elem.data().source,
+                to: elem.data().target,
+                action: elem.data().data
+            }
+        });
+
+        let actions = []
+        for(let j = 0; j < edges.length; ++j){
+            for(let k = 0; k < edges[j].action.length; ++k){
+                actions.push({
+                    from: edges[j].from,
+                    to: edges[j].to,
+                    action: edges[j].action[k]
+                })
+            }
+        }
+
+        automata.AddAutomata(node.id(), actions, node.data('final'));
         if (node.data('initial')) {
             if (initial) throw new Error("Can't have two starting points");
             initial = node.id();
@@ -519,7 +538,7 @@ nextButton.onclick = function (e) {
 
 document.addEventListener('DOMContentLoaded', function () {
     var elems = document.querySelectorAll('.modal');
-    var instances = M.Modal.init(elems, {dismissible: false});
+    var instances = M.Modal.init(elems, { dismissible: false });
 
     var selects = document.querySelectorAll('select');
     var selectInstances = M.FormSelect.init(selects, options);
@@ -530,7 +549,7 @@ multipleAutomataTest.onclick = () => {
 
     let nodes = cy.nodes('.automata');
     let initial = null;
-    automata = new Automata();
+    automata = new Turing();
 
     for (let i = 0; i < nodes.length; i++) {
         let node = nodes[i];
@@ -623,7 +642,7 @@ openButton.onclick = () => {
 saveButton.onclick = () => {
     dialog.showSaveDialog(opts, (filename) => {
         if (filename !== undefined && filename != "") {
-            automata = new Automata();
+            automata = new Turing();
             let nodes = cy.nodes('.automata');
             let initial = null;
             for (let i = 0; i < nodes.length; i++) {

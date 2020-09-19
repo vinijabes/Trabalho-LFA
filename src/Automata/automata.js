@@ -334,6 +334,8 @@ module.exports = class Automata {
     RunTest(initial, str) {
         let queue = [];
 
+        console.log(this.automatas)
+
         queue.push({ automata: initial, index: 0, path: [{ node: initial, index: 0 }] });
         while (queue.length > 0) {
             let current = queue.pop();
