@@ -8,13 +8,29 @@ class Tape{
         this.data = data
     }
 
-    moveToRight(){
+    execute(read, write, move){
+        //console.log(read, write);
+        if(this.__read() != read) return false;
+
+        this.__write(write);
+        this.__move(move);
+        return true;
+    }
+
+    __move(value){
+        if(value == 'R')
+            this.__moveToRight();
+        else if(value == 'L')
+            this.__moveToLeft();
+    }
+
+    __moveToRight(){
         if(this.position == this.data.length - 1)
             this.__addEndTape()
         this.position+=1;
     }
 
-    moveToLeft(){
+    __moveToLeft(){
         if(this.position == 0)
             this.__addFirstTape();
         else
@@ -29,12 +45,13 @@ class Tape{
         this.data = this.data + 'λ';
     }
 
-    read(){
+    __read(){
         return this.data.charAt(this.position);
     }
 
-    write(value){
+    __write(value){
         if(value != 'λ')
-            this.data.substr(0, this.position - 1) + value + this.data.substr(this.position + 1, this.data.length)
+            this.data = this.data.substr(0, this.position) + value + this.data.substr(this.position+1)
     }
 }
+module.exports = Tape;
