@@ -513,8 +513,8 @@ initButton.onclick = function (e) {
             initial = node.id();
         }
     }
-
-    result = automata.RunTest(initial, fita.value);
+    
+    result = automata.runTest(initial, [fita.value, fita.value], 2);
     current = 0;
     if (result) {
         cy.nodes(`node#${result[current]}`).addClass('active-automata');

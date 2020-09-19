@@ -1,118 +1,157 @@
-module.exports = class Turing {
-    static REGEX = "^[^A-Z]{0,1}[A-Z]{0,1}$"
-
-    constructor() {
-        this.machine = {};
-        this.vocabulary = [];
+const Tape = require('./tape'); 
+const { read } = require('fs');
+class TuringMachine {
+    constructor(){
+        this.machine = {}
+        this.tapes = [];
+        this.current = null;
     }
 
     AddAutomata(id, edges, final = false) {
-        console.log(edges)
-        // for (let edge of edges) {
-        //     for (let c of edge.data) {
-        //         if (this.vocabulary.indexOf(c) == -1) this.vocabulary.push(c);
-        //     }
-        // }
         this.machine[id] = { edges, final };
     }
-    
-    _Djikstra(initial) {
-        let distances = {};
-        let prev = {};
-        let pq = [];
 
-        distances[initial] = 0;
-        pq.push({ node: initial, weight: 0 });
-        pq.sort((a, b) => {
-            if (a.weight < b.weight) return -1;
-            if (a.weight > b.weight) return 1;
-            return 0;
-        })
-
-        for (let a in this.machine) {
-            if (a != initial) distances[a] = Infinity;
-            prev[a] = null;
-        }
-
-        while (pq.length) {
-            let minNode = pq.shift();
-            let currNode = minNode.node;
-            for (let e of this.machine[currNode].edges) {
-                let alt = distances[currNode] + 1;
-                if (alt < distances[e.target]) {
-                    distances[e.target] = alt;
-                    prev[e.target] = currNode;
-                    pq.push({ node: e.target, weight: distances[e.target] });
-                    pq.sort((a, b) => {
-                        if (a.weight < b.weight) return -1;
-                        if (a.weight > b.weight) return 1;
-                        return 0;
-                    })
-                }
-            }
-        }
-
-        return distances;
+    getEdges(){
+        
     }
 
-    RemoveUnreachableNodes(initial) {
-        let distances = this._Djikstra(initial);
-        for (let d in distances) {
-            if (distances[d] == Infinity) {
-                let keys = Object.keys(this.machine)
-                for (let a of keys) {
-                    let edges = this.machine[a].edges
-                    for (let e = 0; e < edges.length; e++) {
-                        if (edges[e].target == d) {
-                            edges.splice(e, 1);
-                            e--;
-                        }
-                    }
-                }
-
-                delete this.machine[d];
-            }
+    __initTapes(tapesData, tapesCount){
+        for(let i = 0 ; i < tapesCount; i++){
+            this.tapes.push(new Tape());
+            this.tapes[i].setData(tapesData[i]);
         }
     }
 
-    RunTest(initial, str) {
-        let queue = [];
+    runTest(initial, tapesData, tapesCount){
+        this.__initTapes(tapesData, tapesCount);
+        let history = [];
+        let notVisited = [];
+        this.current = initial;
 
-        console.log(this.machine)
-
-        queue.push({ automata: initial, index: 0, path: [{ node: initial, index: 0 }] });
-        while (queue.length > 0) {
-            let current = queue.pop();
-            console.log(current);
-            let currentAutomata = this.machine[current.automata];
-            let currentIndex = current.index;
-            let nextEdges = currentAutomata.edges;
-
-            if (current.path.length > 2 && current.path[current.path.length - 2].index == currentIndex) {
-                let circular = false;
-                for (let i = current.path.length - 2; i >= 0 && current.path[i].index == currentIndex; i--) {
-                    if (current.path[i].node == current.automata) {
-                        circular = true;
+        addHistory(history, this); //salva estado atual da máquina
+        while(history.length > 0){
+            console.log("quant:",history.length);
+            let currentMT = rollback(history); //recupera último estado da máquina
+            console.log(currentMT);
+            //console.log("ROLLBACK");
+            //console.log(currentMT);
+            notVisited = getEdges(currentMT); //lista todos os edges de um nó
+            while(notVisited.length > 0){ //percorre pelas edges de um nó
+                console.log(notVisited)
+                let readErr = false;
+                let edge = notVisited.shift();
+                for(let i = 0; i < edge.action.length; i++){ //percorre pelo numero de fitas
+                    let action = edge.action;
+                    let currentTape = currentMT.tapes[i];
+                    if(!currentTape.execute(action[i].read, action[i].write, action[i].move)){
+                        readErr = true;
+                        console.log("ANTES ROLLBACK");
+                        console.log(currentMT);
+                        currentMT = rollback(history);
+                        console.log("DEPOIS ROLLBACK");
+                        console.log(currentMT);
+                        console.log("erro")
                         break;
                     }
-                }
-                if (circular) continue;
-            }
-            //if(current.path.length > 50) continue;
-
-            for (let edge of nextEdges) {
-                for (let c of edge.data) {
-                    if (str[currentIndex] == c) {
-                        if (currentIndex + 1 == str.length && this.machine[edge.target].final) return [...current.path, { node: edge.target, index: currentIndex }].map(elem => elem.node);
-                        queue.push({ automata: edge.target, index: currentIndex + 1, path: [...current.path, { node: edge.target, index: currentIndex + 1 }] });
-                    } else if (c == 'λ' || c == '') {
-                        if (currentIndex == str.length && this.machine[edge.target].final) return [...current.path, { node: edge.target, index: currentIndex }].map(elem => elem.node);
-                        queue.push({ automata: edge.target, index: currentIndex, path: [...current.path, { node: edge.target, index: currentIndex }] });
+                    else {
+                        currentMT.current = edge.to
+                        notVisited = getEdges(currentMT).concat(notVisited);
                     }
                 }
+                //console.log(currentMT);
+                console.log(currentMT);
+                if(isFinal(currentMT)) {console.log("TRUE"); return true;}
             }
+            console.log(currentMT);
+            if(isFinal(currentMT)) {console.log("TRUE"); return true;}
+            else {console.log("FALSE"); return false;}
         }
-
-        return false;
     }
 }
+
+function addHistory(history, obj){
+    let mt = {...obj}
+    for(let i = 0; i < mt.tapes.length; i++){
+        let str = new String(mt.tapes[i].data);
+        mt.tapes[i] = new Tape();
+        mt.tapes[i].setData(str);
+    }
+    history.push(mt);
+}
+
+function rollback(history){
+    let response = Object.assign({}, history[history.length - 1]);
+    for(let i = 0; i < response.tapes.length; i++){
+        let str = new String(response.tapes[i].data);
+        response.tapes[i] = new Tape();
+        response.tapes[i].setData(str);
+    }
+    return response;
+}
+
+function getEdges(mt){
+    return mt.machine[mt.current].edges;
+}
+
+function isFinal(mt){
+    return mt.machine[mt.current].final
+}
+
+// teste = new TuringMachine();
+// tapes = ['000', '111']
+// teste.runTest(1, tapes, tapes.length);
+
+module.exports = TuringMachine;
+
+
+
+/*
+    runTest(initial, tapesData, tapesCount){
+        this.__initTapes(tapesData, tapesCount);
+        let currentN = initial;
+        let queue = [""];
+        queue.push(initial);
+        this.__addHistory(initial);
+        let machines = [this];
+        while (machines.length > 0){ //quantidade de maquinas
+            let readErr = false;
+            let currentM = machines.pop();
+            //while(queue.length > 0){ //quantidade de elementos a 
+            console.log(currentN)
+            while(currentN !== false && !readErr){
+                console.log(currentN);
+                if(currentM.machine[currentN].final) {console.log("TRUE"); return true;}
+                for(let edge of currentM.machine[currentN].edges){ //percorre pelas edges de um nó
+                    for(let i = 0; i < edge.action.length; i++){ //percorre pelo numero de fitas
+                        let action = edge.action;
+                        let currentTape = currentM.tapes[i];
+                        //console.log(action[i].read);
+                        //console.log("currenteN", currentN);
+                        if(!currentTape.execute(action[i].read, action[i].write, action[i].move)){
+                            readErr = true;
+                            break;
+                        }
+                        else {
+                            currentN = edge.to
+                            //console.log(currentN)
+                        }
+                    }
+                    //console.log(currentN);
+                    console.log(currentM);
+                    //if (readErr) break;
+                    if(currentM.machine[currentN].final) {console.log("TRUE"); return true;}
+                }
+                if (machines.length == 0 && readErr){
+                    continue;
+                }
+                if(currentM.machine[currentN].final){
+                    console.log("TRUE");
+                    return true;
+                }
+            //}
+            }
+        }
+        console.log("False");
+        return false;
+    }
+*/
