@@ -12,6 +12,7 @@ const Turing = require('../Turing').Turing;
 
 const modal = document.querySelector('#multipleAutomata');
 const inputModal = document.querySelector('#modal1')
+const inputTapeModal = document.querySelector('#modal2')
 const multipleAutomataTest = document.querySelector('#multipleAutomataTest');
 const AddAutomataEntry = document.querySelector('#addAutomataEntry');
 const entryProto = document.querySelector('#prototype_automata');
@@ -53,6 +54,33 @@ function requestInput() {
             instance.close()
         }
     });
+}
+
+function requestTapeInput() {
+    let instance = M.Modal.getInstance(inputTapeModal)
+    instance.open();
+
+    return new Promise((resolve, reject) => {
+        let acceptButton = inputTapeModal.querySelector('#accept');
+        let rejectButton = inputTapeModal.querySelector('#reject');
+        acceptButton.onclick = () => {
+            let inputs = inputTapeModal.querySelectorAll("#tapeinputs .tapeinput")
+            let converted = []
+
+            for (let i = 0; i < inputs.length; ++i) {
+                let tape = inputs[i].querySelector("#tape").value;
+
+                converted.push(tape)
+            }
+            
+            resolve(converted);
+            instance.close();
+        }
+        rejectButton.onclick = () => {
+            reject();
+            instance.close()
+        }
+    })
 }
 
 var cy = cytoscape({
@@ -514,13 +542,18 @@ initButton.onclick = function (e) {
         }
     }
     
-    result = automata.runTest(initial, [fita.value, fita.value], 2);
-    current = 0;
-    if (result) {
-        cy.nodes(`node#${result[current]}`).addClass('active-automata');
-        cy.edges(`edge#${result[current]}_${result[current + 1]}`).addClass('active-edge');
-        nextButton.removeAttribute("disabled");
-    }
+    requestTapeInput().then((fitas) => {
+        console.log(fitas)
+        result = automata.runTest(initial, fitas, fitas.length);
+        current = 0;
+        if (result) {
+            cy.nodes(`node#${result[current]}`).addClass('active-automata');
+            cy.edges(`edge#${result[current]}_${result[current + 1]}`).addClass('active-edge');
+            nextButton.removeAttribute("disabled");
+        }
+    }).catch((err) => {
+        console.log(err)
+    })
 }
 
 nextButton.onclick = function (e) {
