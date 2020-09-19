@@ -1,6 +1,7 @@
 var cloneDeep = require('lodash.clonedeep');
 const Tape = require('./tape'); 
 const { read } = require('fs');
+const { initial } = require('lodash');
 class TuringMachine {
     constructor(){
         this.machine = {}
@@ -23,14 +24,39 @@ class TuringMachine {
         }
     }
 
+    RunTest(inital, tapesData, tapesCount) {
+        this.__initTapes(tapesData, tapesCount);
+        let history = [];
+        let machineQueue = [];
+
+        this.current = initial;
+
+        machineQueue.push({current: initial, history: []})
+        while(machineQueue.length > 0) {
+            let currentMachine = machineQueue.shift()
+            let currentHistory = cloneHistory(currentMachine.history)
+            let currentNode = currentMachine.current
+            
+            while(!this.machine[currentNode].final)
+            {
+
+            }
+        }
+    }
+
     runTest(initial, tapesData, tapesCount){
         this.__initTapes(tapesData, tapesCount);
         let history = [];
         let notVisited = [];
         this.current = initial;
 
+        let i = 0
         addHistory(history, this); //salva estado atual da máquina
         while(history.length > 0){
+            i++;
+            if(i > 10) {
+                return;
+            }
             console.log("quant:",history.length);
             let currentMT = rollback(history); //recupera último estado da máquina
             //console.log(currentMT);
@@ -38,6 +64,11 @@ class TuringMachine {
             //console.log(currentMT);
             notVisited = getEdges(currentMT); //lista todos os edges de um nó
             while(notVisited.length > 0){ //percorre pelas edges de um nó
+                i++;
+                if(i > 100) {
+                    console.log(notVisited)
+                    return;
+                }
                 //console.log(notVisited)
                 let readErr = false;
                 let edge = notVisited.shift();
@@ -51,7 +82,7 @@ class TuringMachine {
                         readErr = true;
                         console.log("ANTES ROLLBACK");
                         console.log(currentMT);
-                        currentMT = rollback(history);
+                        //currentMT = rollback(history);
                         console.log("DEPOIS ROLLBACK");
                         console.log(currentMT);
                         console.log("erro")
@@ -71,6 +102,10 @@ class TuringMachine {
             else {console.log("FALSE"); return false;}
         }
     }
+}
+
+function cloneHistory(history) {
+    return cloneDeep(history)
 }
 
 function addHistory(history, obj){
