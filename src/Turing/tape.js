@@ -6,6 +6,13 @@ class Tape{
 
     setData(data) {
         this.data = data
+        if(data == ""){
+            this.data = 'λ'
+        }
+    }
+
+    canExecute(read) {
+        return this.__read() == read
     }
 
     execute(read, write, move){

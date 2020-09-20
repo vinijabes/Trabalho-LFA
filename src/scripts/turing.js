@@ -544,7 +544,7 @@ initButton.onclick = function (e) {
     
     requestTapeInput().then((fitas) => {
         console.log(fitas)
-        result = automata.runTest(initial, fitas, fitas.length);
+        result = automata.RunTest(initial, fitas, fitas.length);
         current = 0;
         if (result) {
             cy.nodes(`node#${result[current]}`).addClass('active-automata');
