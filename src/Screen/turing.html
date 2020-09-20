@@ -106,28 +106,6 @@
     <div id="modal2" class="modal">
         <div class="modal-content">
             <div id="tapeinputs">
-                <div class="tapeinput row" style="justify-content: space-between;">
-                    <div class="row">
-                        <h5>Tape 1</h5>
-                    </div>
-                    <div class="row">
-                        <div class="col s12 input-field">
-                            <input id="tape">
-                            <label class="active" for="tape">Tape</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="tapeinput row" style="justify-content: space-between;">
-                    <div class="row">
-                        <h5>Tape 2</h5>
-                    </div>
-                    <div class="row">
-                        <div class="col s12 input-field">
-                            <input id="tape">
-                            <label class="active" for="tape">Tape</label>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
         <div class="modal-footer">
@@ -136,60 +114,68 @@
         </div>
     </div>
 
+    <div id="tapeinputtemplate" class="tapeinput row" style="justify-content: space-between;display: none;">
+        <div class="row">
+            <h5 id="title">Tape 1</h5>
+        </div>
+        <div class="row">
+            <div class="col s12 input-field">
+                <input id="tape">
+                <label class="active" for="tape">Tape</label>
+            </div>
+        </div>
+    </div>
+
+    <div id="taperuletemplate" class="taperule row" style="justify-content: space-between; display: none;">
+        <div class="row">
+            <h5 id="title">Tape 1</h5>
+        </div>
+        <div class="row">
+            <div class="col s2 offset-s1 input-field">
+                <input id="read">
+                <label class="active" for="read">Read</label>
+            </div>
+            <div class="col s2 offset-s2 input-field">
+                <input id="write">
+                <label class="active" for="write">Write</label>
+            </div>
+            <div class="col s2 offset-s2 input-field">
+                <select id="move">
+                    <option value="R">R</option>
+                    <option value="L">L</option>
+                    <option value="S">S</option>
+                </select>
+                <label>Movement</label>
+            </div>
+        </div>
+    </div>
+
     <div id="modal1" class="modal">
         <div class="modal-content">
             <div id="taperules">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a id="accept" href="#!" class="modal-close waves-effect waves-green btn-flat">Agree</a>
+            <a id="reject" href="#!" class="modal-close waves-effect waves-green btn-flat">Reject</a>
+        </div>
+    </div>
+
+    <div id="modal3" class="modal">
+        <div class="modal-content">
+            <div id="tapecount">
                 <div class="taperule row" style="justify-content: space-between;">
                     <div class="row">
-                        <h5>Tape 1</h5>
-                    </div>
-                    <div class="row">
-                        <div class="col s2 offset-s1 input-field">
-                            <input id="read">
-                            <label class="active" for="read">Read</label>
-                        </div>
-                        <div class="col s2 offset-s2 input-field">
-                            <input id="write">
-                            <label class="active" for="write">Write</label>
-                        </div>
-                        <div class="col s2 offset-s2 input-field">
-                            <select id="move">
-                                <option value="L">L</option>
-                                <option value="S">S</option>
-                                <option value="R">R</option>
-                            </select>
-                            <label>Movement</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="taperule row" style="justify-content: space-between;">
-                    <div class="row">
-                        <h5>Tape 2</h5>
-                    </div>
-                    <div class="row">
-                        <div class="col s2 offset-s1 input-field">
-                            <input id="read">
-                            <label class="active" for="read">Read</label>
-                        </div>
-                        <div class="col s2 offset-s2 input-field">
-                            <input id="write">
-                            <label class="active" for="write">Write</label>
-                        </div>
-                        <div class="col s2 offset-s2 input-field">
-                            <select id="move">
-                                <option value="L">L</option>
-                                <option value="S">S</option>
-                                <option value="R">R</option>
-                            </select>
-                            <label>Movement</label>
+                        <div class="col s12 input-field">
+                            <input id="tapecountinput" type="number" min="1" max="5">
+                            <label class="active" for="read">Quantidade de fitas</label>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="modal-footer">
-            <a id="accept" href="#!" class="modal-close waves-effect waves-green btn-flat">Agree</a>
-            <a id="reject" href="#!" class="modal-close waves-effect waves-green btn-flat">Reject</a>
+            <a id="accept" href="#!" class="modal-close waves-effect waves-green btn-flat">Continue</a>
         </div>
     </div>
 

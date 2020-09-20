@@ -7,15 +7,19 @@ const BrowserWindow = require('electron').remote.BrowserWindow;
 const dialog = require('electron').remote.dialog;
 var fs = require('fs');
 const { parseString } = require('xml2js');
+const { clone } = require('lodash');
 
 const Turing = require('../Turing').Turing;
 
 const modal = document.querySelector('#multipleAutomata');
 const inputModal = document.querySelector('#modal1')
 const inputTapeModal = document.querySelector('#modal2')
+const countTapeModal = document.querySelector('#modal3')
 const multipleAutomataTest = document.querySelector('#multipleAutomataTest');
 const AddAutomataEntry = document.querySelector('#addAutomataEntry');
 const entryProto = document.querySelector('#prototype_automata');
+const tapeRuleProto = document.querySelector('#taperuletemplate');
+const tapeInputProto = document.querySelector('#tapeinputtemplate');
 const entryList = modal.querySelector('.inputs');
 
 cytoscape.use(edgehandles);
@@ -81,6 +85,41 @@ function requestTapeInput() {
             instance.close()
         }
     })
+}
+
+function requestTapeCount() {
+    let instance = M.Modal.getInstance(countTapeModal)
+    instance.open();
+
+    return new Promise((resolve, reject) => {
+        let acceptButton = countTapeModal.querySelector('#accept');
+        acceptButton.onclick = () => {
+            let input = countTapeModal.querySelectorAll("#tapecount #tapecountinput")[0]
+
+            let value = parseInt(input.value)
+            if(value > 0 && value < 5){
+                resolve(value);
+            } else {
+                reject("Invalid input");
+            }
+            instance.close();
+        }
+    })
+}
+
+function tapeInputLabel(r) {
+    let label = ''
+    for (let i = 0; i < r.length; ++i) {
+        if (r[i].read == '') r[i].read = 'λ';
+        if (r[i].write == '') r[i].write = 'λ';
+
+        if (i != 0) label += '|'
+        label += r[i].read;
+        label += ';' + r[i].write;
+        label += ';' + r[i].move;
+    }
+
+    return label;
 }
 
 var cy = cytoscape({
@@ -284,15 +323,7 @@ let defaultsEdges = {
                 cy.remove(addedEles);
             } else {
                 let label = ''
-                for (let i = 0; i < r.length; ++i) {
-                    if (r[i].read == '') r[i].read = 'λ';
-                    if (r[i].write == '') r[i].write = 'λ';
-
-                    if (i != 0) label += '|'
-                    label += r[i].read;
-                    label += ';' + r[i].write;
-                    label += ';' + r[i].move;
-                }
+                label = tapeInputLabel(r)
 
                 console.log(label)
 
@@ -414,9 +445,15 @@ function addNode(id, position, initial, final) {
 }
 
 function addEdge(source, target, id, data) {
+
+    let label = ""
+    for(let i = 0; i < data.length; ++i){
+        label += tapeInputLabel(data[i]) + "\n"
+    }
+
     cy.add({
         group: 'edges',
-        data: { id: id, source, target, data, label: data.join(" ") },
+        data: { id: id, source, target, data, label },
     });
 }
 
@@ -569,12 +606,51 @@ nextButton.onclick = function (e) {
     }
 }
 
+var tapeCount = 0;
+
+function setupEdgeInputModal(tapeCount) {
+    edgescontainer = inputModal.querySelector('#taperules')
+    edgescontainer.innerHTML = '';
+
+    for(let i = 0; i < tapeCount; ++i){
+        edgescontainer.appendChild(tapeRuleProto.clone(i + 1))
+    }
+}
+
+function setupTestInputModal(tapeCount) {
+    inputcontainer = inputTapeModal.querySelector('#tapeinputs')
+    inputcontainer.innerHTML = '';
+
+    for(let i = 0; i < tapeCount; ++i){
+        inputcontainer.appendChild(tapeInputProto.clone(i + 1))
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     var elems = document.querySelectorAll('.modal');
     var instances = M.Modal.init(elems, { dismissible: false });
 
     var selects = document.querySelectorAll('select');
     var selectInstances = M.FormSelect.init(selects, options);
+
+    let func = () => {
+        requestTapeCount().then((count) => {
+            console.log(count)
+            tapeCount = count;
+
+            setupEdgeInputModal(tapeCount);
+            setupTestInputModal(tapeCount);
+
+        }).catch((err) => {
+            if(err){
+                console.log(err)
+            }
+
+            setTimeout(func, 200)
+        })    
+    }
+
+    func()
 });
 
 multipleAutomataTest.onclick = () => {
@@ -618,6 +694,22 @@ entryProto.clone = function () {
     return c;
 }
 
+tapeRuleProto.clone = function(index) {
+    let c = tapeRuleProto.cloneNode(true);
+    c.style.display = '';
+    c.querySelector('#title').innerHTML = `Tape ${index}`
+
+    return c;
+}
+
+tapeInputProto.clone = function(index) {
+    let c = tapeInputProto.cloneNode(true);
+    c.style.display = '';
+    c.querySelector('#title').innerHTML = `Tape ${index}`
+
+    return c;
+}
+
 entryList.appendChild(entryProto.clone());
 
 ipcRenderer.on('build', (e, data) => {
@@ -636,15 +728,20 @@ var opts = {
     ]
 }
 
-
 openButton.onclick = () => {
     dialog.showOpenDialog(opts, (filename) => {
         console.log(filename);
         fs.readFile(filename[0], "utf8", (err, data) => {
             parseString(data, function (err, result) {
-                let states = result.structure.automaton[0].state;
+                let tapes = result.structure.tapes ? parseInt(result.structure.tapes[0]) : 1;
+                let states = result.structure.automaton[0].state || result.structure.automaton[0].block;
                 let edges = result.structure.automaton[0].transition;
                 let automata = {};
+
+                tapeCount = tapes;
+                setupEdgeInputModal(tapes)
+                setupTestInputModal(tapes)
+
                 for (let state of states) {
                     let s = state.$.id;
                     automata[s] = { edges: [] }
@@ -657,12 +754,47 @@ openButton.onclick = () => {
                             for (let i of automata[s].edges) {
                                 if (i.id == `${s}_${e.to[0]}`) {
                                     newEdge = false;
-                                    i.label += e.read.join(" ");
-                                    i.data = [...i.data, ...e.read];
+
+                                    let tapesArray = []
+                                    for(let t = 0; t < tapes; ++t){
+                                        let read = e.read[t]
+                                        let write = e.write[t]
+                                        let move = e.move[t]
+
+                                        if(read._) read = read._;
+                                        else if(typeof read == "object") read = 'λ'
+                                        if(write._) write = write._;
+                                        else if(typeof write == "object") write = 'λ'
+
+                                        if(move._) move = move._;
+
+                                        tapesArray.push({read, write, move})
+                                    }
+
+                                    i.label += " " + tapeInputLabel(tapesArray);
+                                    i.data = [...i.data, tapesArray];
                                 }
                             }
                             if (newEdge)
-                                automata[s].edges.push({ source: s, target: e.to[0], id: `${s}_${e.to[0]}`, label: e.read.join(" "), data: e.read });
+                            {
+                                let tapesArray = []
+                                for(let t = 0; t < tapes; ++t){
+                                    let read = e.read[t]
+                                    let write = e.write[t]
+                                    let move = e.move[t]
+
+                                    if(read._) read = read._;
+                                    else if(typeof read == "object") read = 'λ'
+                                    if(write._) write = write._;
+                                    else if(typeof write == "object") write = 'λ'
+
+                                    if(move._) move = move._;
+
+                                    tapesArray.push({read, write, move})
+                                }
+
+                                automata[s].edges.push({ source: s, target: e.to[0], id: `${s}_${e.to[0]}`, label: tapeInputLabel(tapesArray), data: [tapesArray] });
+                            }
                         }
                     }
                 }

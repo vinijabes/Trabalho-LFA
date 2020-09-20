@@ -34,7 +34,7 @@ class TuringMachine {
         while(machineQueue.length > 0) {
             ++i;
 
-            if(i > 30) return;
+            if(i > 50) return;
 
             let currentMachine = machineQueue.shift()
             let currentHistory = cloneHistory(currentMachine.history)
@@ -46,7 +46,7 @@ class TuringMachine {
             j = 0;
             while(!this.machine[currentNode].final){
                 ++j;
-                if(j > 100) break;
+                if(j > 200) break;
                 let currentEdges = this.machine[currentNode].edges;
                 let activePaths = []
                 
@@ -92,6 +92,8 @@ class TuringMachine {
                     let action = activePaths[0].action[j];
                     currentTapes[j].execute(action.read, action.write, action.move)
                 }
+
+                console.log({tapes: cloneDeep(currentTapes), current: currentNode})
 
                 currentNode = activePaths[0].to;
             }
