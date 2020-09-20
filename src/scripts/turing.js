@@ -599,12 +599,18 @@ initButton.onclick = function (e) {
 nextButton.onclick = function (e) {
     if (!result) return;
     cy.nodes(`node#${result[current].current}`).removeClass('active-automata');
-    cy.edges(`edge#${result[current].current}_${result[current + 1].current}`).removeClass('active-edge');
+    if(current + 1 < result.length){
+        cy.edges(`edge#${result[current].current}_${result[current + 1].current}`).removeClass('active-edge');
+    }
+    
     if (current + 1 < result.length) {
         current++;
         cy.nodes(`node#${result[current].current}`).addClass('active-automata');
         cy.edges(`edge#${result[current].current}_${result[current + 1].current}`).addClass('active-edge');
-        makeTapesResult(result, current);
+        if(current + 1 < result.length){
+            cy.edges(`edge#${result[current].current}_${result[current + 1].current}`).addClass('active-edge');
+            makeTapesResult(result, current);
+        }
     } else {
         nextButton.setAttribute("disabled", "disabled");
         hideTapesResult();
