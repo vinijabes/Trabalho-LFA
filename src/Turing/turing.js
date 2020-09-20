@@ -75,15 +75,16 @@ class TuringMachine {
                     let tapes = cloneDeep(currentTapes)
 
                     let history = cloneDeep(currentHistory)
-                    history.push({tapes, current: currentNode})
+                    history.push({tapes: cloneDeep(tapes), current: currentNode})
                     
                     for(let j = 0; j < tapesCount; ++j){
                         let action = activePaths[i].action[j];
                         tapes[j].execute(action.read, action.write, action.move)
                     }
 
-
-                    machineQueue.push({current: activePaths[i].to, tapes, history})
+                    console.log(currentHistory)
+                    console.log(history)
+                    machineQueue.push({current: activePaths[i].to, tapes: cloneDeep(tapes), history})
                 }
 
                 currentHistory.push({tapes: cloneDeep(currentTapes), current: currentNode})
@@ -97,7 +98,7 @@ class TuringMachine {
             }
 
             if(this.machine[currentNode].final) {
-                currentHistory.push({...currentHistory[currentHistory.length - 1], current: currentNode})
+                currentHistory.push({tapes: cloneDeep(currentTapes), current: currentNode})
                 return currentHistory;
             }
         }
