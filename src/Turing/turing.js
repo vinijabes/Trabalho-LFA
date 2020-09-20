@@ -93,15 +93,13 @@ class TuringMachine {
                     currentTapes[j].execute(action.read, action.write, action.move)
                 }
 
-                console.log({tapes: cloneDeep(currentTapes), current: currentNode})
-
                 currentNode = activePaths[0].to;
             }
 
             if(this.machine[currentNode].final) {
                 console.log(currentHistory)
                 console.log("TRUE")
-                return true;
+                return currentHistory;
             }
         }
 

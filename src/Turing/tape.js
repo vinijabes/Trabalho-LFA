@@ -57,8 +57,7 @@ class Tape{
     }
 
     __write(value){
-        if(value != 'λ')
-            this.data = this.data.substr(0, this.position) + value + this.data.substr(this.position+1)
+        this.data = this.data.substr(0, this.position) + value + this.data.substr(this.position+1)
     }
 }
 module.exports = Tape;
