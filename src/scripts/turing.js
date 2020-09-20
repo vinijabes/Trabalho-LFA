@@ -716,7 +716,26 @@ multipleAutomataTest.onclick = () => {
         let node = nodes[i];
         let edges = cy.edges(`edge[source="${node.id()}"]`);
         edges = Object.values(edges).filter((elem, index) => index < edges.length);
-        automata.AddAutomata(node.id(), (edges.map((elem) => elem.data())), node.data('final'));
+        edges = edges.map((elem) => {
+            return {
+                from: elem.data().source,
+                to: elem.data().target,
+                action: elem.data().data
+            }
+        });
+
+        let actions = []
+        for(let j = 0; j < edges.length; ++j){
+            for(let k = 0; k < edges[j].action.length; ++k){
+                actions.push({
+                    from: edges[j].from,
+                    to: edges[j].to,
+                    action: edges[j].action[k]
+                })
+            }
+        }
+
+        automata.AddAutomata(node.id(), actions, node.data('final'));
         if (node.data('initial')) {
             if (initial) throw new Error("Can't have two starting points");
             initial = node.id();
@@ -875,46 +894,68 @@ saveButton.onclick = () => {
                 let node = nodes[i];
                 let edges = cy.edges(`edge[source="${node.id()}"]`);
                 edges = Object.values(edges).filter((elem, index) => index < edges.length);
-                automata.AddAutomata(node.id(), (edges.map((elem) => elem.data())), node.data('final'));
+                edges = edges.map((elem) => {
+                    return {
+                        from: elem.data().source,
+                        to: elem.data().target,
+                        action: elem.data().data
+                    }
+                });
+        
+                let actions = []
+                for(let j = 0; j < edges.length; ++j){
+                    for(let k = 0; k < edges[j].action.length; ++k){
+                        actions.push({
+                            from: edges[j].from,
+                            to: edges[j].to,
+                            action: edges[j].action[k]
+                        })
+                    }
+                }
+        
+                automata.AddAutomata(node.id(), actions, node.data('final'));
                 if (node.data('initial')) {
                     if (initial) throw new Error("Can't have two starting points");
                     initial = node.id();
                 }
             }
-            console.log(automata.automatas);
+            console.log(automata.machine);
 
             let states = [];
             let transitions = [];
 
-            for (let i in automata.automatas) {
-                states.push({ id: i, initial: automata.automatas.initial, final: automata.automatas.final });
-                for (let e of automata.automatas[i].edges) {
-                    console.log(e);
-                    for (let d of e.data) {
-                        console.log(d);
-                        transitions.push({ from: i, to: e.target, read: d });
-                    }
+            for (let i in automata.machine) {
+                states.push({ id: i, initial: parseInt(i) == parseInt(initial), final: automata.machine[i].final });
+                for (let e of automata.machine[i].edges) {
+
+                    transitions.push({ from: i, to: e.to, action: e.action });
                 }
             }
 
             console.log(states, transitions);
 
-            let text = `<?xml version="1.0" encoding="UTF-8" standalone="no"?><!--Created with JFLAP 7.1.-->\n<structure>&#13;\n<type>fa</type>&#13;\n<automaton>&#13;\n`;
+            let text = `<?xml version="1.0" encoding="UTF-8" standalone="no"?><!--Created with JFLAP 7.1.-->\n<structure>&#13;\n<type>turing</type>&#13;\n<tapes>${tapeCount}</tapes>&#13;\n<automaton>&#13;\n`;
             for (let s in states) {
-                text += `<state id="${s}" name="${states[s]}">&#13;\n`;
+                text += `<state id="${s}" name="q${s}">&#13;\n`;
+                console.log(states[s]);
                 if (states[s].initial) text += `<initial/>&#13;\n`;
                 if (states[s].final) text += `<final/>&#13;\n`;
+                text += `</state>&#13;\n`;
             }
 
             for (let t of transitions) {
                 text += `<transition>&#13;\n`;
                 text += `<from>${t.from}</from>&#13;\n`;
                 text += `<to>${t.to}</to>&#13;\n`;
-                text += `<read>${t.read}</read>&#13;\n`;
+                for(let act = 0; act < t.action.length; ++act) {
+                    text += `<read tape="${act + 1}">${t.action[act].read}</read>&#13;\n`;
+                    text += `<write tape="${act + 1}">${t.action[act].write}</write>&#13;\n`;
+                    text += `<move tape="${act + 1}">${t.action[act].move}</move>&#13;\n`;
+                }
                 text += `</transition>&#13;\n`;
             }
             text += `</automaton>&#13;\n</structure>`;
-
+        
             fs.writeFileSync(filename, text, 'utf-8');
         }
     })
