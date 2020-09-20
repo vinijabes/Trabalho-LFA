@@ -587,6 +587,7 @@ initButton.onclick = function (e) {
         if (result) {
             cy.nodes(`node#${result[current].current}`).addClass('active-automata');
             cy.edges(`edge#${result[current].current}_${result[current + 1].current}`).addClass('active-edge');
+            setupTapesResult(result[0].tapes.length)
             showTapesResult();
             makeTapesResult(result, current);
             nextButton.removeAttribute("disabled");
@@ -653,12 +654,15 @@ function hideTapesResult(){
 }
 
 function makeTapesResult(result, current){
-    //i
-    let tape = document.querySelector("#tape-result-"+"0") //i  
-    let value = result[current].tapes[0].data;
-    let position = result[current].tapes[0].position;
-    tape.innerHTML = value.substr(0, position) + "<a class='selected'>"+value[position]+"</a>" + value.substr(position+1)
-    console.log(result[current].tapes[0].data)
+    let count = result[0].tapes.length;
+    for(let i = 0 ; i< count; i++){
+        console.log(result[current].tapes[0].data)
+        console.log(result[current].tapes[0].position)
+        let tape = document.querySelector("#tape-result-"+0)    
+        let value = result[current].tapes[0].data;
+        let position = result[current].tapes[0].position;
+        tape.innerHTML = value.substr(0, position) + "<a class='selected'>"+value[position]+"</a>" + value.substr(position+1)
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
