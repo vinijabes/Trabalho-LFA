@@ -97,8 +97,7 @@ class TuringMachine {
             }
 
             if(this.machine[currentNode].final) {
-                console.log(currentHistory)
-                console.log("TRUE")
+                currentHistory.push({...currentHistory[currentHistory.length - 1], current: currentNode})
                 return currentHistory;
             }
         }

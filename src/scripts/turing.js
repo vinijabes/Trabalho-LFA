@@ -584,8 +584,8 @@ initButton.onclick = function (e) {
         result = automata.RunTest(initial, fitas, fitas.length);
         current = 0;
         if (result) {
-            cy.nodes(`node#${result[current]}`).addClass('active-automata');
-            cy.edges(`edge#${result[current]}_${result[current + 1]}`).addClass('active-edge');
+            cy.nodes(`node#${result[current].current}`).addClass('active-automata');
+            cy.edges(`edge#${result[current].current}_${result[current + 1].current}`).addClass('active-edge');
             nextButton.removeAttribute("disabled");
         }
     }).catch((err) => {
@@ -595,12 +595,12 @@ initButton.onclick = function (e) {
 
 nextButton.onclick = function (e) {
     if (!result) return;
-    cy.nodes(`node#${result[current]}`).removeClass('active-automata');
-    cy.edges(`edge#${result[current]}_${result[current + 1]}`).removeClass('active-edge');
+    cy.nodes(`node#${result[current].current}`).removeClass('active-automata');
+    cy.edges(`edge#${result[current].current}_${result[current + 1].current}`).removeClass('active-edge');
     if (current + 1 < result.length) {
         current++;
-        cy.nodes(`node#${result[current]}`).addClass('active-automata');
-        cy.edges(`edge#${result[current]}_${result[current + 1]}`).addClass('active-edge');
+        cy.nodes(`node#${result[current].current}`).addClass('active-automata');
+        cy.edges(`edge#${result[current].current}_${result[current + 1].current}`).addClass('active-edge');
     } else {
         nextButton.setAttribute("disabled", "disabled");
     }
