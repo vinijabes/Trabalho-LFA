@@ -20,7 +20,7 @@ const AddAutomataEntry = document.querySelector('#addAutomataEntry');
 const entryProto = document.querySelector('#prototype_automata');
 const tapeRuleProto = document.querySelector('#taperuletemplate');
 const tapeInputProto = document.querySelector('#tapeinputtemplate');
-const tapesResultProto = document.querySelector('#tape-result-0');
+const tapesResultProto = document.querySelector('#tape-result-template');
 const entryList = modal.querySelector('.inputs');
 
 cytoscape.use(edgehandles);
@@ -547,6 +547,7 @@ function BuildAF(data) {
 }
 
 initButton.onclick = function (e) {
+    hideTapesResult();
     automata = new Turing();
     let nodes = cy.nodes('.automata');
     let initial = null;
@@ -592,6 +593,9 @@ initButton.onclick = function (e) {
             makeTapesResult(result, current);
             nextButton.removeAttribute("disabled");
         }
+        else{
+            showFalseResult();
+        }
     }).catch((err) => {
         console.log(err)
     })
@@ -608,6 +612,7 @@ nextButton.onclick = function (e) {
         current++;
         cy.nodes(`node#${result[current].current}`).addClass('active-automata');
         makeTapesResult(result, current);
+        cy.edges(`edge#${result[current].current}_${result[current + 1].current}`).addClass('active-edge');
         if(current + 1 < result.length){
             cy.edges(`edge#${result[current].current}_${result[current + 1].current}`).addClass('active-edge');
         }
@@ -639,27 +644,35 @@ function setupTestInputModal(tapeCount) {
 
 function setupTapesResult(tapeCount) {
     tapesResultContainer = document.querySelector('#tapes-result')
-
-    for(let i = 1; i < tapeCount; ++i){
+    tapesResultContainer.innerHTML = '';
+    for(let i = 0; i < tapeCount; i++){
         tapesResultContainer.appendChild(tapesResultProto.clone(i))
     }
 }
 
 function showTapesResult(){
-    document.querySelector("#tapes-result").style.display = "block";
+    hideFalseResult();
+    document.querySelector("#tapes-result-container").style.display = "block";
 }
 function hideTapesResult(){
-    document.querySelector("#tapes-result").style.display = "none";
+    document.querySelector("#tapes-result-container").style.display = "none";
+}
+
+function showFalseResult(){
+    document.querySelector("#resultBoolean").style.display = "";
+}
+function hideFalseResult(){
+    document.querySelector("#resultBoolean").style.display = "none";
 }
 
 function makeTapesResult(result, current){
     let count = result[0].tapes.length;
     for(let i = 0 ; i< count; i++){
-        console.log(result[current].tapes[0].data)
-        console.log(result[current].tapes[0].position)
-        let tape = document.querySelector("#tape-result-"+0)    
-        let value = result[current].tapes[0].data;
-        let position = result[current].tapes[0].position;
+        console.log(result[current].tapes[i].data)
+        console.log(result[current].tapes[i].position)
+        let tape = document.querySelector("#tape-result-"+i)    
+        let value = result[current].tapes[i].data;
+        let position = result[current].tapes[i].position;
         tape.innerHTML = value.substr(0, position) + "<a class='selected'>"+value[position]+"</a>" + value.substr(position+1)
     }
 }
@@ -753,7 +766,7 @@ tapesResultProto.clone = function(index) {
     let c = tapesResultProto.cloneNode(true);
     c.style.display = '';
     c.id = "tape-result-"+index;
-
+    console.log("INDEX",index);
     return c;
 }
 

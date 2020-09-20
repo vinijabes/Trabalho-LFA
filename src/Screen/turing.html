@@ -38,9 +38,12 @@
         <li><a href="./turing.html">Turing</a></li>
     </ul>
 
-    <div class="tapes-result" id="tapes-result">
+    <p id="tape-result-template" style="display: none;" class="tape"></p>
+    <div class="tapes-result-container" id="tapes-result-container">
         <h5 class="title">Passo a Passo - Fitas:</h5>
-        <p id="tape-result-0"></p>
+        <div id="tapes-result">
+
+        </div>
     </div>
     <div id="multipleAutomata" class="modal">
         <div class="modal-content">
@@ -58,7 +61,7 @@
             </div>
             <div class="input-field" id="prototype_automata" style="display: none">
                 <i class="material-icons prefix" id="resultFita" style="color:green"></i>
-                <input type="text" class="fita">
+                <label for="fita">Fita 1</label><input type="text" id="fita" class="fita">
             </div>
         </div>
         <div class="modal-footer">
@@ -83,7 +86,8 @@
                 <a data-opt="0" style="cursor: pointer;">Add Node</a>
                 <a data-opt="2" style="cursor: pointer;">Remove</a>
                 <div class="row">
-                    <div class="col s4" id="inputsAutomata">
+                    <div class="col s4" >
+                        <p id="resultBoolean" class="resultBoolean" style="display: none;">FALSO</p>
                     </div>
                     <div class="col s8 md12">
                         <div class="col s4">
@@ -134,11 +138,11 @@
         </div>
         <div class="row">
             <div class="col s2 offset-s1 input-field">
-                <input id="read">
+                <input id="read" maxlength="1">
                 <label class="active" for="read">Read</label>
             </div>
             <div class="col s2 offset-s2 input-field">
-                <input id="write">
+                <input id="write" maxlength="1">
                 <label class="active" for="write">Write</label>
             </div>
             <div class="col s2 offset-s2 input-field">
