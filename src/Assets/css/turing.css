@@ -9,6 +9,21 @@ div.tapes-result-container{
     display: none;
 }
 
+#addAutomataEntry{
+    margin-left: 60px;
+    margin-top: -5px;
+}
+
+#prototype_automata{
+    border: 1px solid black;
+}
+#resultFita{
+    padding-left: 10%;
+}
+#test-list{
+    padding: 10px;
+}
+
 .tape a{
     font-weight: bolder;
     font-size: 18;

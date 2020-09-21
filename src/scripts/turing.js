@@ -757,7 +757,7 @@ multipleAutomataTest.onclick = () => {
             return element.value;
         });
 
-        if (automata.RunTest(initial, values, tapeCount)) {
+        if (automata.RunTest(initial, entry.querySelector('.fita').value, tapeCount)) {
             entry.querySelector('#resultFita').innerHTML = 'check_circle';
             entry.querySelector('#resultFita').style.color = 'green';
         } else {
