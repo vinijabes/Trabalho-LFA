@@ -18,26 +18,6 @@
 </head>
 
 <body>
-    <nav>
-        <div class="nav-wrapper">
-            <a href="#!" class="brand-logo">Logo</a>
-            <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
-            <ul class="right hide-on-med-and-down">
-                <li><a href="./regex.html">Regex</a></li>
-                <li><a href="./grammar.html">Gramática</a></li>
-                <li><a href="./automata.html">Automato</a></li>
-                <li><a href="./turing.html">Turing</a></li>
-            </ul>
-        </div>
-    </nav>
-
-    <ul class="sidenav" id="mobile-demo">
-        <li><a href="./regex.html">Regex</a></li>
-        <li><a href="./grammar.html">Gramática</a></li>
-        <li><a href="./automata.html">Automato</a></li>
-        <li><a href="./turing.html">Turing</a></li>
-    </ul>
-
     <p id="tape-result-template" style="display: none;" class="tape"></p>
     <div class="tapes-result-container" id="tapes-result-container">
         <h5 class="title">Passo a Passo - Fitas:</h5>
@@ -61,7 +41,11 @@
             </div>
             <div class="input-field" id="prototype_automata" style="display: none">
                 <i class="material-icons prefix" id="resultFita" style="color:green"></i>
-                <label for="fita">Fita 1</label><input type="text" id="fita" class="fita">
+                <div id="test-list">
+                    <div id="test-proto">
+                        <label for="fita" id="test-title">Tape 1</label><input type="text" id="fita" class="fita">
+                    </div>
+                </div>
             </div>
         </div>
         <div class="modal-footer">
@@ -91,7 +75,7 @@
                     </div>
                     <div class="col s8 md12">
                         <div class="col s4">
-                            <button style="width: 100%;" data-target="multipleAutomata" class="btn modal-trigger">Testar
+                            <button style="width: 100%;" data-target="multipleAutomata" id="test" class="btn modal-trigger">Testar
                                 Vários</button>
                         </div>
                         <div class="col s4">

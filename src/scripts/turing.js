@@ -7,7 +7,7 @@ const BrowserWindow = require('electron').remote.BrowserWindow;
 const dialog = require('electron').remote.dialog;
 var fs = require('fs');
 const { parseString } = require('xml2js');
-const { clone } = require('lodash');
+const { clone, entriesIn } = require('lodash');
 
 const Turing = require('../Turing').Turing;
 
@@ -20,6 +20,7 @@ const AddAutomataEntry = document.querySelector('#addAutomataEntry');
 const entryProto = document.querySelector('#prototype_automata');
 const tapeRuleProto = document.querySelector('#taperuletemplate');
 const tapeInputProto = document.querySelector('#tapeinputtemplate');
+const testProto = document.querySelector('#test-proto');
 const tapesResultProto = document.querySelector('#tape-result-template');
 const entryList = modal.querySelector('.inputs');
 
@@ -518,6 +519,7 @@ const openButton = document.getElementById('open');
 const saveButton = document.getElementById('save');
 const initButton = document.getElementById('init');
 const nextButton = document.getElementById('next');
+const testButton = document.getElementById('test');
 const convertButton = document.getElementById('convert');
 const convertGrammarButton = document.getElementById('convertGrammar');
 const convertRegexButton = document.getElementById('convertRegex');
@@ -650,6 +652,14 @@ function setupTapesResult(tapeCount) {
     }
 }
 
+function setupMultipleTest(tapeCount) {
+    testListContainer = document.querySelector('#test-list')
+    //tapesResultContainer.innerHTML = '';
+    for(let i = 1; i < tapeCount; i++){
+        testListContainer.appendChild(testProto.clone(i+1))
+    }
+}
+
 function showTapesResult(){
     hideFalseResult();
     document.querySelector("#tapes-result-container").style.display = "block";
@@ -692,6 +702,7 @@ document.addEventListener('DOMContentLoaded', function () {
             setupEdgeInputModal(tapeCount);
             setupTestInputModal(tapeCount);
             setupTapesResult(tapeCount);
+            setupMultipleTest(tapeCount);
 
         }).catch((err) => {
             if(err){
@@ -707,7 +718,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 multipleAutomataTest.onclick = () => {
     let entries = modal.querySelectorAll('.automataEntry');
-
     let nodes = cy.nodes('.automata');
     let initial = null;
     automata = new Turing();
@@ -743,8 +753,11 @@ multipleAutomataTest.onclick = () => {
     }
 
     for (let entry of entries) {
-        console.log(entry);
-        if (automata.RunTest(initial, entry.querySelector('.fita').value)) {
+        let values = Array.from(entry.querySelectorAll(".fita").values()).map((element)=>{
+            return element.value;
+        });
+
+        if (automata.RunTest(initial, values, tapeCount)) {
             entry.querySelector('#resultFita').innerHTML = 'check_circle';
             entry.querySelector('#resultFita').style.color = 'green';
         } else {
@@ -759,9 +772,10 @@ AddAutomataEntry.onclick = () => {
 }
 
 entryProto.clone = function () {
-    let c = entryProto.cloneNode(true);
+    let c = document.querySelector("#prototype_automata").cloneNode(true);
     c.style.display = '';
     c.className = 'input-field automataEntry';
+    console.log(c)
     return c;
 }
 
@@ -786,6 +800,13 @@ tapesResultProto.clone = function(index) {
     c.style.display = '';
     c.id = "tape-result-"+index;
     console.log("INDEX",index);
+    return c;
+}
+
+testProto.clone = function (index) {
+    let c = testProto.cloneNode(true);
+    c.style.display = '';
+    c.querySelector('#test-title').innerHTML = `Tape ${index}`
     return c;
 }
 
@@ -821,6 +842,7 @@ openButton.onclick = () => {
                 setupEdgeInputModal(tapes)
                 setupTestInputModal(tapes)
                 setupTapesResult(tapes)
+                setupMultipleTest(tapes)
 
                 for (let state of states) {
                     let s = state.$.id;
@@ -960,3 +982,4 @@ saveButton.onclick = () => {
         }
     })
 }
+
